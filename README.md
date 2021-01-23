@@ -1,2 +1,18 @@
 # cx16imageviewer
-multi file format (iff, pcx, bmp, koala) image viewer for Commander X16
+Multi file format image viewer for Commander X16.
+
+Supports:
+
+- C64 Koala files
+- IFF files, including CRNG and CCRT color cycling
+- BMP files
+- PCX files
+
+of 2 to 256 colors.
+
+Compiling
+---------
+
+The program is written in Prog8. Requires prog8 compiler 6.0 and 64tass assembler.
+
+Simply type ``p8compile imageviewer.p8 -target cx16`` or just ``make``.
