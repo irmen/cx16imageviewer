@@ -28,7 +28,7 @@ pcx_module {
                                 else if num_colors == 16
                                     palette.set_rgb8(&header + $10, 16)
                                 else if num_colors == 2
-                                    palette.set_monochrome()
+                                    palette.set_monochrome($000, $fff)
                                 when bits_per_pixel {
                                     8 -> load_ok = bitmap.do8bpp(width, height)
                                     4 -> load_ok = bitmap.do4bpp(width, height)

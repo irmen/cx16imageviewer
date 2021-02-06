@@ -8,11 +8,11 @@ Supports:
 - BMP files
 - PCX files
 
-of 2 to 256 colors.
+of 2 to 256 colors. Display resolution is 320x240.
 
 Compiling
 ---------
 
-The program is written in Prog8. Requires prog8 compiler 6.0 and 64tass assembler.
+The program is written in Prog8. Requires prog8 compiler 6.1 and 64tass assembler.
 
 Simply type ``p8compile imageviewer.p8 -target cx16`` or just ``make``.
