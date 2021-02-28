@@ -1,12 +1,13 @@
 %target cx16
 %import gfx2
-%import textio
 %import diskio
 
 pcx_module {
+    uword load_error_details
 
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
+        load_error_details = "file"
 
         if diskio.f_open(8, filenameptr) {
             ubyte[128] header
@@ -44,16 +45,23 @@ pcx_module {
                                         if size==3*256 {
                                             load_ok = true
                                             palette.set_rgb8(palette_mem, num_colors)
-                                        }
-                                    }
-                                }
+                                        } else
+                                            load_error_details = "invalid palette size"
+                                    } else
+                                        load_error_details = "no palette data"
+                                } else
+                                    load_error_details = "bitmap decode error"
                             } else
-                                txt.print("width not multiple of 8!\n")
+                                load_error_details = "width not multiple of 8"
                         } else
-                            txt.print("has >256 colors!\n")
-                    }
-                }
-            }
+                            load_error_details = ">256 colors"
+                    } else
+                        load_error_details = "invalid bpp"
+                } else
+                    load_error_details = "no pcx"
+            } else
+                load_error_details = "no header"
+
             diskio.f_close()
         }
 

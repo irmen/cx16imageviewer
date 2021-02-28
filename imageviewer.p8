@@ -9,6 +9,8 @@
 %import bmp_module
 %zeropage basicsafe
 
+; TODO fix loading of: all BMP and PCX images ("invalid palette size")...
+
 
 main {
     sub start() {
@@ -72,7 +74,7 @@ main {
                 else
                     sys.wait(180)
             } else {
-                load_error(filenameptr)
+                load_error(iff_module.load_error_details, filenameptr)
             }
         }
         else if string.compare(extension, ".pcx")==0 {
@@ -81,7 +83,7 @@ main {
             if pcx_module.show_image(filenameptr) {
                 sys.wait(180)
             } else {
-                load_error(filenameptr)
+                load_error(pcx_module.load_error_details, filenameptr)
             }
         }
         else if string.compare(extension,".koa")==0 {
@@ -90,7 +92,7 @@ main {
             if koala_module.show_image(filenameptr) {
                 sys.wait(180)
             } else {
-                load_error(filenameptr)
+                load_error(koala_module.load_error_details, filenameptr)
             }
         }
         else if string.compare(extension, ".bmp")==0  {
@@ -99,15 +101,19 @@ main {
             if bmp_module.show_image(filenameptr) {
                 sys.wait(180)
             } else {
-                load_error(filenameptr)
+                load_error(bmp_module.load_error_details, filenameptr)
             }
         }
     }
 
-    sub load_error(uword filenameptr) {
+    sub load_error(uword what, uword filenameptr) {
         gfx2.screen_mode(0)      ; back to default text mode and palette
+        txt.print("load error\n")
+        txt.print(what)
+        txt.print("\nfile: ")
         txt.print(filenameptr)
-        txt.print(": load error\n")
+        txt.nl()
+        cx16.rombank(4)        ; switch back to basic rom
         sys.exit(1)
     }
 

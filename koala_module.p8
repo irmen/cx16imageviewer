@@ -5,8 +5,10 @@
 
 koala_module {
     const uword load_location = $6000
+    uword load_error_details
 
     sub show_image(uword filenameptr) -> ubyte {
+        load_error_details = "file"
         ubyte load_ok=false
         if diskio.f_open(8, filenameptr) {
             uword size = diskio.f_read(load_location, 2)    ; skip the first 2 bytes (load address)
@@ -17,7 +19,11 @@ koala_module {
                     convert_koalapic()
                     load_ok = true
                 }
+                else
+                    load_error_details = "file size"
             }
+            else
+                load_error_details = "no header"
             diskio.f_close()
         }
 

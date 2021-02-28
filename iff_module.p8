@@ -1,6 +1,5 @@
 %target cx16
 %import gfx2
-%import textio
 %import diskio
 
 iff_module {
@@ -12,6 +11,7 @@ iff_module {
     ubyte[16] cycle_lows
     ubyte[16] cycle_highs
     ubyte num_cycles
+    uword load_error_details
 
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
@@ -32,6 +32,7 @@ iff_module {
         ubyte cycle_ccrt = false
         num_cycles = 0
         cmap = memory("palette", 256*4)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
+        load_error_details = "file"
 
         if diskio.f_open(8, filenameptr) {
             size = diskio.f_read(buffer, 12)
@@ -52,7 +53,7 @@ iff_module {
                             void diskio.f_read(buffer, chunk_size_lo)
                             camg = mkword(buffer[2], buffer[3])
                             if camg & $0800 {
-                                txt.print("ham mode not supported!\n")
+                                load_error_details = "ham mode not supported"
                                 break
                             }
                         }
@@ -118,8 +119,10 @@ iff_module {
                         }
                     }
                 } else
-                    txt.print("not an iff ilbm file!\n")
+                    load_error_details = "not iff ilbm"
             }
+            else
+                load_error_details = "no header"
 
             diskio.f_close()
         }

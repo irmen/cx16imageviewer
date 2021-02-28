@@ -3,6 +3,7 @@
 %import diskio
 
 bmp_module {
+    uword load_error_details
 
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
@@ -15,6 +16,7 @@ bmp_module {
         uword offsety
         uword palette = memory("palette", 256*4)
         uword total_read = 0
+        load_error_details = "file"
 
         if diskio.f_open(8, filenameptr) {
             size = diskio.f_read(header, $36)
@@ -43,8 +45,14 @@ bmp_module {
                         decode_bitmap()
                         load_ok = true
                     }
+                    else
+                        load_error_details = "invalid palette size"
                 }
+                else
+                    load_error_details = "not bmp"
             }
+            else
+                load_error_details = "no header"
 
             diskio.f_close()
         }
