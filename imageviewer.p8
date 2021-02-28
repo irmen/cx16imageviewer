@@ -9,8 +9,6 @@
 %import bmp_module
 %zeropage basicsafe
 
-; TODO fix loading of: all BMP and PCX images ("invalid palette size")...
-
 
 main {
     sub start() {
