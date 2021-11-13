@@ -1,4 +1,5 @@
 %import gfx2
+%import palette
 %import diskio
 
 iff_module {
@@ -241,7 +242,7 @@ iff_module {
             uword x
             for x in 0 to width-1 {
                 ; ubyte mask = masks[lsb(x) & 7]
-                uword pixptr = x/8 + scanline_data_ptr
+                uword @shared pixptr = x/8 + scanline_data_ptr
                 ubyte bits = 0
                 %asm {{
                     bra  +

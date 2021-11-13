@@ -1,5 +1,7 @@
 %import gfx2
 %import diskio
+%import palette
+
 
 pcx_module {
     uword load_error_details
