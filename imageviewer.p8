@@ -114,11 +114,6 @@ main {
         sys.exit(1)
     }
 
-    sub extension_equals(uword stringptr, uword extensionptr) -> ubyte {
-        ubyte ix = rfind(stringptr, '.')
-        return ix<255 and string.compare(stringptr+ix, extensionptr)==0
-    }
-
     sub rfind(uword stringptr, ubyte char) -> ubyte {
         ubyte i
         for i in string.length(stringptr)-1 downto 0 {
