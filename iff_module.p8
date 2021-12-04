@@ -152,18 +152,10 @@ iff_module {
 
         sub make_ehb_palette() {
             ; generate 32 additional Extra-Halfbrite colors in the cmap
-            uword palletteptr = cmap
-            uword ehbptr = palletteptr + 32*3
-            repeat 32 {
-                @(ehbptr) = @(palletteptr)>>1
-                ehbptr++
-                palletteptr++
-                @(ehbptr) = @(palletteptr)>>1
-                ehbptr++
-                palletteptr++
-                @(ehbptr) = @(palletteptr)>>1
-                ehbptr++
-                palletteptr++
+            uword ehb_cmap = cmap+32*3
+            ubyte i
+            for i in 0 to 32*3-1 {
+                @(ehb_cmap+i) = @(cmap+i)>>1
             }
         }
 
