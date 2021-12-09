@@ -3,7 +3,7 @@
 %import palette
 
 koala_module {
-    const uword load_location = $6000
+    uword load_location = memory("koala_file_buffer", 8000+1000+1000+1)
     uword load_error_details = "file load"
 
     sub show_image(uword filenameptr) -> ubyte {
@@ -34,42 +34,52 @@ koala_module {
                 ubyte @zp d
                 for d in 0 to 7 {
                     gfx2.position(posx, posy + d)
-                    get_8_pixels()
-                    gfx2.next_pixels(&cx16.r8, 8)
+                    plot_4x2_pixels()
                 }
                 cx16.r14 ++
                 cx16.r15 ++
             }
         }
 
-        sub get_8_pixels() {
-            ubyte  bm = @(bitmap_ptr)
-            ubyte  @zp  m = pixcolor()
-            cx16.r11H = m
-            cx16.r11L = m
-            bm >>= 2
-            m = pixcolor()
-            cx16.r10H = m
-            cx16.r10L = m
-            bm >>= 2
-            m = pixcolor()
-            cx16.r9H = m
-            cx16.r9L = m
-            bm >>= 2
-            m = pixcolor()
-            cx16.r8H = m
-            cx16.r8L = m
+        sub plot_4x2_pixels() {
+            cx16.r0L = @(bitmap_ptr)
+            pixel()
+            cx16.r0L <<= 2
+            pixel()
+            cx16.r0L <<= 2
+            pixel()
+            cx16.r0L <<= 2
+            pixel()
             bitmap_ptr++
 
-            sub pixcolor() -> ubyte {
-                ubyte @zp coloridx
-                when bm & 3 {
-                    0 -> coloridx = cx16.r13L            ; background color
-                    1 -> coloridx = @(cx16.r14) >>4      ; colors_data_location
-                    2 -> coloridx = @(cx16.r14) & 15     ; colors_data_location
-                    else -> coloridx = @(cx16.r15) & 15  ; bg_colors_data_location
-                }
-                return coloridx
+            asmsub pixel() {
+                %asm {{
+                    lda  cx16.r0L
+                    and  #%11000000
+                    beq  _bgcolor
+                    cmp  #%01000000
+                    beq  _col1
+                    cmp  #%10000000
+                    beq  _col2
+                    ; col3
+                    lda  (cx16.r15)        ; bg_colors_data_location
+                    and  #15
+                    bra  +
+_bgcolor            lda  cx16.r13L         ; background color
+                    bra  +
+_col1               lda  (cx16.r14)        ; colors_data_location
+                    lsr  a
+                    lsr  a
+                    lsr  a
+                    lsr  a
+                    bra  +
+_col2               lda  (cx16.r14)         ; colors_data_location
+                    and  #15
++                   ; now plot two pixels because C64 multicolor mode is double wide pixels
+                    sta  cx16.VERA_DATA0
+                    sta  cx16.VERA_DATA0
+                    rts
+                }}
             }
         }
     }
