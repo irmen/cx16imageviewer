@@ -76,9 +76,8 @@ bmp_module {
             uword bits_width = width * bpp
             ubyte pad_bytes = (((bits_width + 31) >> 5) << 2) - ((bits_width + 7) >> 3) as ubyte
 
-            uword x
+            uword @zp x
             uword y
-            ubyte b
             for y in height-1 downto 0 {
                 gfx2.position(offsetx, offsety+y)
                 when bpp {
@@ -88,18 +87,18 @@ bmp_module {
                     }
                     4 -> {
                         for x in 0 to width-1 step 2 {
-                            b = c64.CHRIN()
-                            gfx2.next_pixel(b>>4)
-                            gfx2.next_pixel(b&15)
+                            cx16.r5L = c64.CHRIN()
+                            gfx2.next_pixel(cx16.r5L>>4)
+                            gfx2.next_pixel(cx16.r5L&15)
                         }
                     }
                     2 -> {
                         for x in 0 to width-1 step 4 {
-                            b = c64.CHRIN()
-                            gfx2.next_pixel(b>>6)
-                            gfx2.next_pixel(b>>4 & 3)
-                            gfx2.next_pixel(b>>2 & 3)
-                            gfx2.next_pixel(b & 3)
+                            cx16.r5L = c64.CHRIN()
+                            gfx2.next_pixel(cx16.r5L>>6)
+                            gfx2.next_pixel(cx16.r5L>>4 & 3)
+                            gfx2.next_pixel(cx16.r5L>>2 & 3)
+                            gfx2.next_pixel(cx16.r5L & 3)
                         }
                     }
                     1 -> {

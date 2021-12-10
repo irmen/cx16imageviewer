@@ -206,20 +206,20 @@ iff_module {
         }
 
         sub decode_rle_scanline() {
-            uword x = interleave_stride
+            uword @zp x = interleave_stride
             uword plane_ptr = scanline_data_ptr
 
             while x {
-                ubyte b = c64.CHRIN()
-                if b > 128 {
-                    ubyte b2 = c64.CHRIN()
-                    repeat 2+(b^255) {
-                        @(plane_ptr) = b2
+                cx16.r4L = c64.CHRIN()
+                if cx16.r4L > 128 {
+                    cx16.r5L = c64.CHRIN()
+                    repeat 2+(cx16.r4L^255) {
+                        @(plane_ptr) = cx16.r5L
                         plane_ptr++
                         x--
                     }
-                } else if b < 128 {
-                    repeat b+1 {
+                } else if cx16.r4L < 128 {
+                    repeat cx16.r4L+1 {
                         @(plane_ptr) = c64.CHRIN()
                         plane_ptr++
                         x--
@@ -231,11 +231,11 @@ iff_module {
 
         sub planar_to_chunky_scanline() {
             ; ubyte[8] masks = [128,64,32,16,8,4,2,1]
-            uword x
+            uword @zp x
             for x in 0 to width-1 {
                 ; ubyte mask = masks[lsb(x) & 7]
                 uword @shared pixptr = x/8 + scanline_data_ptr
-                ubyte bits = 0
+                cx16.r5L = 0
                 %asm {{
                     bra  +
 _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
@@ -256,7 +256,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
                     and  P8ZP_SCRATCH_B1
                     beq  +
                     sec
-+                   ror  bits                   ; shift planar bit into chunky byte
++                   ror  cx16.r5L                   ; shift planar bit into chunky byte
                     lda  P8ZP_SCRATCH_W1
                     ; clc
                     adc  bitplane_stride
@@ -271,7 +271,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
                     sbc  num_planes
                     beq  +
                     tay
--                   lsr  bits
+-                   lsr  cx16.r5L
                     dey
                     bne  -
 +
@@ -282,12 +282,12 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
 ;                    clear_carry()
 ;                    if @(pixptr) & mask
 ;                        set_carry()
-;                    ror(bits)           ; shift planar bit into chunky byte
+;                    ror(cx16.r5L)           ; shift planar bit into chunky byte
 ;                    pixptr += bitplane_stride
 ;                }
-;                bits >>= 8-num_planes
+;                cx16.r5L >>= 8-num_planes
 
-                gfx2.next_pixel(bits)
+                gfx2.next_pixel(cx16.r5L)
             }
         }
     }

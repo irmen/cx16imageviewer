@@ -104,18 +104,18 @@ bitmap {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height and status {
-            ubyte b = c64.CHRIN()
-            if b>>6==3 {
-                b &= %00111111
-                ubyte dat = c64.CHRIN()
-                repeat b {
-                    if y_ok
-                        gfx2.set_8_pixels_from_bits(dat, 1, 0)
-                    px += 8
-                }
+            cx16.r4 = c64.CHRIN()
+            if cx16.r4L>>6==3 {
+                cx16.r4L &= %00111111
+                cx16.r5L = c64.CHRIN()
+                if y_ok
+                    repeat cx16.r4L {
+                        gfx2.set_8_pixels_from_bits(cx16.r5L, 1, 0)
+                    }
+                px += cx16.r4 * 8
             } else {
                 if y_ok
-                    gfx2.set_8_pixels_from_bits(b, 1, 0)
+                    gfx2.set_8_pixels_from_bits(cx16.r4L, 1, 0)
                 px += 8
             }
             if px==width
@@ -129,20 +129,20 @@ bitmap {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height and status {
-            ubyte b = c64.CHRIN()
-            if b>>6==3 {
-                b &= %00111111
-                ubyte dat = c64.CHRIN()
+            cx16.r4L = c64.CHRIN()
+            if cx16.r4L>>6==3 {
+                cx16.r4L &= %00111111
+                cx16.r5L = c64.CHRIN()
                 if y_ok
-                    repeat b {
-                        gfx2.next_pixel(dat>>4)
-                        gfx2.next_pixel(dat & 15)
+                    repeat cx16.r4L {
+                        gfx2.next_pixel(cx16.r5L >> 4)
+                        gfx2.next_pixel(cx16.r5L & 15)
                     }
-                px += b*2
+                px += cx16.r4L*2
             } else {
                 if y_ok {
-                    gfx2.next_pixel(b>>4)
-                    gfx2.next_pixel(b & 15)
+                    gfx2.next_pixel(cx16.r4L >> 4)
+                    gfx2.next_pixel(cx16.r4L & 15)
                 }
                 px += 2
             }
@@ -157,17 +157,17 @@ bitmap {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height and status {
-            ubyte b = c64.CHRIN()
-            if b>>6==3 {
-                b &= %00111111
-                ubyte dat = c64.CHRIN()
+            cx16.r4L = c64.CHRIN()
+            if cx16.r4L>>6==3 {
+                cx16.r4L &= %00111111
+                cx16.r5L = c64.CHRIN()
                 if y_ok
-                    repeat b
-                        gfx2.next_pixel(dat)
-                px += b
+                    repeat cx16.r4L
+                        gfx2.next_pixel(cx16.r5L)
+                px += cx16.r4L
             } else {
                 if y_ok
-                    gfx2.next_pixel(b)
+                    gfx2.next_pixel(cx16.r4L)
                 px++
             }
             if px==width
