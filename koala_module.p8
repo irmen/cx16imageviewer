@@ -7,7 +7,7 @@ koala_module {
     uword load_error_details = "file load"
 
     sub show_image(uword filenameptr) -> ubyte {
-        if diskio.load(8, filenameptr, load_location)==10001 {
+        if diskio.load(8, filenameptr, load_location) - load_location == 10001 {
             ; set a better C64 color palette, the X16's default is too saturated
             palette.set_c64pepto()
             convert_koalapic()
