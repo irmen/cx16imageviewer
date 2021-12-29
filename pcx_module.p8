@@ -16,7 +16,7 @@ pcx_module {
             if size==128 {
                 if header[0] == $0a and header[2] == 1 {
                     ubyte bits_per_pixel = header[3]
-                    if bits_per_pixel==1 or bits_per_pixel==4 or bits_per_pixel==8 {
+                    if bits_per_pixel in [1,4,8] {
                         uword width = mkword(header[$09], header[$08]) - mkword(header[$05], header[$04]) + 1
                         uword height = mkword(header[$0b], header[$0a]) - mkword(header[$07], header[$06]) + 1
                         ubyte number_of_planes = header[$41]
