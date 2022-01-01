@@ -4,7 +4,7 @@
 
 koala_module {
     uword load_location = memory("koala_file_buffer", 8000+1000+1000+1)
-    uword load_error_details = "file load"
+    str load_error_details = "file load"
 
     sub show_image(uword filenameptr) -> ubyte {
         if diskio.load(8, filenameptr, load_location) - load_location == 10001 {
