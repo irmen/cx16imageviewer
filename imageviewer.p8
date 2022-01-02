@@ -6,6 +6,7 @@
 %import iff_module
 %import pcx_module
 %import bmp_module
+%import fileloader
 %zeropage basicsafe
 
 

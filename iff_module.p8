@@ -1,6 +1,6 @@
 %import gfx2
 %import palette
-%import diskio
+%import fileloader
 
 iff_module {
     uword cmap
@@ -34,15 +34,15 @@ iff_module {
         cmap = memory("palette", 256*4)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
         load_error_details = "file"
 
-        if diskio.f_open(8, filenameptr) {
-            size = diskio.f_read(buffer, 12)
+        if fileloader.load(filenameptr, 0) {
+            size = fileloader.nextbytes(buffer, 12)
             if size==12 {
                 if buffer[0]=='f' and buffer[1]=='o' and buffer[2]=='r' and buffer[3]=='m'
                         and buffer[8]=='i' and buffer[9]=='l' and buffer[10]=='b' and buffer[11]=='m'{
 
                     while read_chunk_header() {
                         if chunk_id == "bmhd" {
-                            void diskio.f_read(buffer, chunk_size_lo)
+                            void fileloader.nextbytes(buffer, chunk_size_lo)
                             width = mkword(buffer[0], buffer[1])
                             height = mkword(buffer[2], buffer[3])
                             num_planes = buffer[8]
@@ -50,7 +50,7 @@ iff_module {
                             compression = buffer[10]
                         }
                         else if chunk_id == "camg" {
-                            void diskio.f_read(buffer, chunk_size_lo)
+                            void fileloader.nextbytes(buffer, chunk_size_lo)
                             camg = mkword(buffer[2], buffer[3])
                             if camg & $0800 {
                                 load_error_details = "ham mode not supported"
@@ -59,13 +59,13 @@ iff_module {
                         }
                         else if chunk_id == "cmap" {
                             have_cmap = true
-                            void diskio.f_read(cmap, chunk_size_lo)
+                            void fileloader.nextbytes(cmap, chunk_size_lo)
                         }
                         else if chunk_id == "crng" {
                             ; DeluxePaint color cycle range
                             if not cycle_ccrt {
                                 cycle_crng = true
-                                void diskio.f_read(buffer, chunk_size_lo)
+                                void fileloader.nextbytes(buffer, chunk_size_lo)
                                 ubyte flags = buffer[5]
                                 if flags & 1 {
                                     cycle_rates[num_cycles] = mkword(buffer[2], buffer[3])
@@ -82,7 +82,7 @@ iff_module {
                             ; Graphicraft color cycle range
                             if not cycle_crng {
                                 cycle_ccrt = true
-                                void diskio.f_read(buffer, chunk_size_lo)
+                                void fileloader.nextbytes(buffer, chunk_size_lo)
                                 ubyte direction = buffer[1]
                                 if direction {
                                     ; delay_sec = buffer[4] * 256 * 256 * 256 + buffer[5] * 256 * 256 + buffer[6] * 256 + buffer[7]
@@ -123,14 +123,12 @@ iff_module {
             }
             else
                 load_error_details = "no header"
-
-            diskio.f_close()
         }
 
         return load_ok
 
         sub read_chunk_header() -> ubyte {
-            size = diskio.f_read(buffer, 8)
+            size = fileloader.nextbytes(buffer, 8)
             if size==8 {
                 chunk_id[0] = buffer[0]
                 chunk_id[1] = buffer[1]
@@ -145,9 +143,9 @@ iff_module {
 
         sub skip_chunk() {
             repeat lsb(chunk_size_hi)*8 + (chunk_size_lo >> 13)
-                void diskio.f_read(scanline_data_ptr, $2000)
+                void fileloader.nextbytes(scanline_data_ptr, $2000)
 
-            void diskio.f_read(scanline_data_ptr, chunk_size_lo & $1fff)
+            void fileloader.nextbytes(scanline_data_ptr, chunk_size_lo & $1fff)
         }
 
         sub make_ehb_palette() {
@@ -184,9 +182,9 @@ iff_module {
             ubyte interlaced = (camg & $0004) != 0
             uword y
             for y in 0 to height-1 {
-                void diskio.f_read(scanline_data_ptr, interleave_stride)
+                void fileloader.nextbytes(scanline_data_ptr, interleave_stride)
                 if interlaced
-                    void diskio.f_read(scanline_data_ptr, interleave_stride)
+                    void fileloader.nextbytes(scanline_data_ptr, interleave_stride)
                 gfx2.position(offsetx, offsety+y)
                 planar_to_chunky_scanline()
             }
@@ -210,9 +208,9 @@ iff_module {
             uword plane_ptr = scanline_data_ptr
 
             while x {
-                cx16.r4L = c64.CHRIN()
+                cx16.r4L = fileloader.nextbyte()
                 if cx16.r4L > 128 {
-                    cx16.r5L = c64.CHRIN()
+                    cx16.r5L = fileloader.nextbyte()
                     repeat 2+(cx16.r4L^255) {
                         @(plane_ptr) = cx16.r5L
                         plane_ptr++
@@ -220,7 +218,7 @@ iff_module {
                     }
                 } else if cx16.r4L < 128 {
                     repeat cx16.r4L+1 {
-                        @(plane_ptr) = c64.CHRIN()
+                        @(plane_ptr) = fileloader.nextbyte()
                         plane_ptr++
                         x--
                     }

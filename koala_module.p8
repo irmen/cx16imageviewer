@@ -1,14 +1,14 @@
 %import gfx2
-%import diskio
+%import fileloader
 %import palette
 
 koala_module {
     ; c64 koala files are about 10Kb each and fit easily in a contiguous main memory block.
-    uword load_location = memory("koala_file_buffer", 8000+1000+1000+1)
+    uword load_location = memory("koala_file_buffer", 8000+1000+1000+1+2)
     str load_error_details = "file load"
 
     sub show_image(uword filenameptr) -> ubyte {
-        if diskio.load(8, filenameptr, load_location) - load_location == 10001 {
+        if fileloader.load(filenameptr, load_location) - load_location == 10003 {
             ; set a better C64 color palette, the X16's default is too saturated
             palette.set_c64pepto()
             convert_koalapic()
@@ -18,10 +18,10 @@ koala_module {
     }
 
     sub convert_koalapic() {
-        cx16.r14 = load_location + 8000     ; colors_data_location
+        cx16.r14 = load_location + 2 + 8000     ; colors_data_location
         cx16.r15 = cx16.r14 + 1000          ; bg_colors_data_location
-        cx16.r13L = @(load_location + 8000 + 1000 + 1000) & 15     ; background_color
-        uword bitmap_ptr = load_location
+        cx16.r13L = @(load_location + 2 + 8000 + 1000 + 1000) & 15     ; background_color
+        uword bitmap_ptr = load_location+2
 
         gfx2.clear_screen()
         uword offsety = (gfx2.height - 200) / 2

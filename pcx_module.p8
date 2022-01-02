@@ -1,5 +1,5 @@
 %import gfx2
-%import diskio
+%import fileloader
 %import palette
 
 
@@ -10,9 +10,9 @@ pcx_module {
         ubyte load_ok = false
         load_error_details = "file"
 
-        if diskio.f_open(8, filenameptr) {
+        if fileloader.load(filenameptr, 0) {
             ubyte[128] header
-            uword size = diskio.f_read(header, 128)
+            uword size = fileloader.nextbytes(header, 128)
             if size==128 {
                 if header[0] == $0a and header[2] == 1 {
                     ubyte bits_per_pixel = header[3]
@@ -37,12 +37,12 @@ pcx_module {
                                     1 -> load_ok = bitmap.do1bpp(width, height)
                                 }
                                 if load_ok {
-                                    load_ok = c64.CHRIN()
-                                    if load_ok == 12 {
+                                    ubyte haspalette = fileloader.nextbyte()
+                                    if haspalette == 12 {
                                         ; there is 256 colors of palette data at the end
                                         uword palette_mem = sys.progend()
                                         load_ok = false
-                                        size = diskio.f_read(palette_mem, 3*256)
+                                        size = fileloader.nextbytes(palette_mem, 3*256)
                                         if size==3*256 {
                                             load_ok = true
                                             palette.set_rgb8(palette_mem, num_colors)
@@ -62,8 +62,6 @@ pcx_module {
                     load_error_details = "no pcx"
             } else
                 load_error_details = "no header"
-
-            diskio.f_close()
         }
 
         return load_ok
@@ -77,7 +75,6 @@ bitmap {
     uword py
     uword px
     ubyte y_ok
-    ubyte status
 
     sub start_plot(uword width, uword height) {
         offsetx = 0
@@ -89,7 +86,6 @@ bitmap {
             offsetx = (gfx2.width - width) / 2
         if height < gfx2.height
             offsety = (gfx2.height - height) / 2
-        status = (not c64.READST()) or (c64.READST()&64==64)
     }
 
     sub next_scanline() {
@@ -97,17 +93,16 @@ bitmap {
         py++
         y_ok = py < gfx2.height
         gfx2.position(offsetx, offsety+py)
-        status = (not c64.READST()) or (c64.READST()&64==64)
     }
 
     sub do1bpp(uword width, uword height) -> ubyte {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
-        while py < height and status {
-            cx16.r4 = c64.CHRIN()
+        while py < height {
+            cx16.r4 = fileloader.nextbyte()
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
-                cx16.r5L = c64.CHRIN()
+                cx16.r5L = fileloader.nextbyte()
                 if y_ok
                     repeat cx16.r4L {
                         gfx2.set_8_pixels_from_bits(cx16.r5L, 1, 0)
@@ -122,17 +117,17 @@ bitmap {
                 next_scanline()
         }
 
-        return status
+        return true
     }
 
     sub do4bpp(uword width, uword height) -> ubyte {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
-        while py < height and status {
-            cx16.r4L = c64.CHRIN()
+        while py < height {
+            cx16.r4L = fileloader.nextbyte()
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
-                cx16.r5L = c64.CHRIN()
+                cx16.r5L = fileloader.nextbyte()
                 if y_ok
                     repeat cx16.r4L {
                         gfx2.next_pixel(cx16.r5L >> 4)
@@ -150,17 +145,17 @@ bitmap {
                 next_scanline()
         }
 
-        return status
+        return true
     }
 
     sub do8bpp(uword width, uword height) -> ubyte {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
-        while py < height and status {
-            cx16.r4L = c64.CHRIN()
+        while py < height {
+            cx16.r4L = fileloader.nextbyte()
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
-                cx16.r5L = c64.CHRIN()
+                cx16.r5L = fileloader.nextbyte()
                 if y_ok
                     repeat cx16.r4L
                         gfx2.next_pixel(cx16.r5L)
@@ -174,6 +169,6 @@ bitmap {
                 next_scanline()
         }
 
-        return status
+        return true
     }
 }

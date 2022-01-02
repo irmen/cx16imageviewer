@@ -1,5 +1,5 @@
 %import gfx2
-%import diskio
+%import fileloader
 
 bmp_module {
     uword load_error_details
@@ -17,8 +17,8 @@ bmp_module {
         uword total_read = 0
         load_error_details = "file"
 
-        if diskio.f_open(8, filenameptr) {
-            size = diskio.f_read(header, $36)
+        if fileloader.load(filenameptr, 0) {
+            size = fileloader.nextbytes(&header, $36)
             if size==$36 {
                 total_read = $36
                 if header[0]=='b' and header[1]=='m' {
@@ -32,13 +32,13 @@ bmp_module {
                         num_colors = 2**bpp
                     uword skip_hdr = header_size - 40
                     repeat skip_hdr
-                        void c64.CHRIN()
+                        void fileloader.nextbyte()
                     total_read += skip_hdr
-                    size = diskio.f_read(palette, num_colors*4)
+                    size = fileloader.nextbytes(palette, num_colors*4)
                     if size==num_colors*4 {
                         total_read += size
                         repeat bm_data_offset - total_read
-                            void c64.CHRIN()
+                            void fileloader.nextbyte()
                         gfx2.clear_screen()
                         custompalette.set_bgra(palette, num_colors)
                         decode_bitmap()
@@ -52,8 +52,6 @@ bmp_module {
             }
             else
                 load_error_details = "no header"
-
-            diskio.f_close()
         }
 
         return load_ok
@@ -82,18 +80,18 @@ bmp_module {
                 when bpp {
                     8 -> {
                         repeat width
-                            gfx2.next_pixel(c64.CHRIN())
+                            gfx2.next_pixel(fileloader.nextbyte())
                     }
                     4 -> {
                         repeat (width+1)/2 {
-                            cx16.r5L = c64.CHRIN()
+                            cx16.r5L = fileloader.nextbyte()
                             gfx2.next_pixel(cx16.r5L>>4)
                             gfx2.next_pixel(cx16.r5L&15)
                         }
                     }
                     2 -> {
                         repeat (width+3)/4 {
-                            cx16.r5L = c64.CHRIN()
+                            cx16.r5L = fileloader.nextbyte()
                             gfx2.next_pixel(cx16.r5L>>6)
                             gfx2.next_pixel(cx16.r5L>>4 & 3)
                             gfx2.next_pixel(cx16.r5L>>2 & 3)
@@ -102,12 +100,12 @@ bmp_module {
                     }
                     1 -> {
                         repeat (width+7)/8
-                            gfx2.set_8_pixels_from_bits(c64.CHRIN(), 1, 0)
+                            gfx2.set_8_pixels_from_bits(fileloader.nextbyte(), 1, 0)
                     }
                 }
 
                 repeat pad_bytes
-                    void c64.CHRIN()
+                    void fileloader.nextbyte()
             }
         }
     }
