@@ -29,7 +29,8 @@ fileloader {
             @(buffer) = nextbyte()
             buffer++
         }
-        ; TODO return only bytes that are actually available
+        ; we should probably return only bytes that are actually available, but that slows down the routine
+        ; it doesn't hurt to just fill the full buffer requested.
         return count
     }
 
@@ -55,14 +56,4 @@ fileloader {
             rts
         }}
     }
-
-;    sub nextbyte22() -> ubyte {
-;        cx16.r2L = @(data_ptr)
-;        data_ptr++
-;        if(msb(data_ptr)==$c0) {
-;            data_ptr=$a000
-;            cx16.rambank(cx16.getrambank()+1)
-;        }
-;        return cx16.r2L
-;    }
 }

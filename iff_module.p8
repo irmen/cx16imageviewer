@@ -94,7 +94,7 @@ iff_module {
                                     cycle_rate_ticks[num_cycles] = 1
                                     cycle_lows[num_cycles] = buffer[2]
                                     cycle_highs[num_cycles] = buffer[3]
-                                    cycle_reverseflags[num_cycles] = direction == 1    ; TODO weird, the spec say that -1 = reversed but several example images that I have downloaded are the opposite
+                                    cycle_reverseflags[num_cycles] = direction == 1    ; weird, the spec say that -1 = reversed but several example images that I have downloaded are the opposite
                                     num_cycles++
                                 }
                             } else
