@@ -4,7 +4,7 @@
 
 koala_module {
     ; c64 koala files are about 10Kb each and fit easily in a contiguous main memory block.
-    uword load_location = memory("koala_file_buffer", 8000+1000+1000+1+2)
+    uword load_location = memory("koala_file_buffer", 8000+1000+1000+1+2, 0)
     str load_error_details = "file load"
 
     sub show_image(uword filenameptr) -> ubyte {

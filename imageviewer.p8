@@ -42,7 +42,7 @@ main {
         ; load and show the images on the disk with the given extensions.
         ; this only works in the emulator V38 with an sd-card image with the files on it.
 
-        str[40] filename_ptrs
+        str[80] filename_ptrs
         ubyte num_files = diskio.list_files(8, 0, &filename_ptrs, len(filename_ptrs))
         if num_files {
             while num_files {

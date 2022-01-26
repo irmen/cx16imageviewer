@@ -8,12 +8,12 @@ bmp_module {
         ubyte load_ok = false
         ubyte[$36] header
         uword size
-        uword width
+        uword @zp width
         uword height
-        ubyte bpp
+        ubyte @zp bpp
         uword offsetx
         uword offsety
-        uword palette = memory("palette", 256*4)
+        uword palette = memory("palette", 256*4, 0)
         uword total_read = 0
         load_error_details = "file"
 

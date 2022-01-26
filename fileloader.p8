@@ -3,7 +3,7 @@
 
 fileloader {
 
-    uword @shared data_ptr
+    uword @shared @requirezp data_ptr
 
     sub load(str filename, uword address) -> uword {
         if not address {
@@ -13,11 +13,9 @@ fileloader {
         data_ptr = address
         txt.print("loading ")
         txt.print(filename)
-        txt.print(" from ")
-        txt.print_uwhex(address, true)
+        ;c64.SETMSG(%10000000)       ; enable kernal status messages for load
         uword end = diskio.load_raw(8, filename, address)
-        txt.print(" to ")
-        txt.print_uwhex(end, true)
+        ;c64.SETMSG(0)
         txt.nl()
         @(end) = 0
         cx16.rambank(1)
@@ -36,11 +34,7 @@ fileloader {
 
     asmsub nextbyte() -> ubyte @A {
         %asm {{
-            lda  data_ptr
-            ldy  data_ptr+1
-            sta  P8ZP_SCRATCH_W1
-            sty  P8ZP_SCRATCH_W1+1
-            lda  (P8ZP_SCRATCH_W1)
+            lda  (data_ptr)
             pha
             inc  data_ptr
             bne  +
@@ -48,8 +42,8 @@ fileloader {
 +           lda  data_ptr+1
             cmp  #$c0
             bne  +
-            lda  #$a0
             stz  data_ptr
+            lda  #$a0
             sta  data_ptr+1
             inc  $00            ; next ram bank
 +           pla

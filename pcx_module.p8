@@ -72,8 +72,8 @@ bitmap {
 
     uword offsetx
     uword offsety
-    uword py
-    uword px
+    uword @zp py
+    uword @zp px
     ubyte y_ok
 
     sub start_plot(uword width, uword height) {

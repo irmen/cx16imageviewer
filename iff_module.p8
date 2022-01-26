@@ -31,7 +31,7 @@ iff_module {
         ubyte cycle_crng = false
         ubyte cycle_ccrt = false
         num_cycles = 0
-        cmap = memory("palette", 256*4)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
+        cmap = memory("palette", 256*4, 0)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
         load_error_details = "file"
 
         if fileloader.load(filenameptr, 0) {
@@ -179,8 +179,8 @@ iff_module {
 
         sub decode_raw() {
             start_plot()
-            ubyte interlaced = (camg & $0004) != 0
-            uword y
+            ubyte @zp interlaced = (camg & $0004) != 0
+            uword @zp y
             for y in 0 to height-1 {
                 void fileloader.nextbytes(scanline_data_ptr, interleave_stride)
                 if interlaced
@@ -193,7 +193,7 @@ iff_module {
         sub decode_rle() {
             start_plot()
             ubyte interlaced = (camg & $0004) != 0
-            uword y
+            uword @zp y
             for y in 0 to height-1 {
                 decode_rle_scanline()
                 if interlaced
