@@ -9,5 +9,6 @@ imageviewer.prg: imageviewer.p8 bmp_module.p8 iff_module.p8 koala_module.p8 pcx_
 	p8compile $< -target cx16
 
 emu: all
-	box16 -sdcard ~/cx16sdcard.img -prg imageviewer.prg -run
+	mcopy -D o imageviewer.prg x:IMAGEVIEWER
+	x16emu -sdcard ~/cx16sdcard.img -scale 2 -quality best -bas autoexec.txt
 
