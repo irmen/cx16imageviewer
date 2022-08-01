@@ -19,10 +19,10 @@ main {
         txt.print("\nimage viewer for commander x16\nformats supported: .iff, .pcx, .bmp, .koa (c64 koala)\n\n")
         if string.length(diskio.status(8)) {
             txt.print("enter image file name or just enter for all on disk: ")
-            ubyte i = txt.input_chars(diskio.filename)
+            ubyte i = txt.input_chars(diskio.list_filename)
             gfx2.screen_mode(4)    ; 320*240, 256c
             if i
-                attempt_load(diskio.filename)
+                attempt_load(diskio.list_filename)
             else
                 show_pics_sdcard()
 
