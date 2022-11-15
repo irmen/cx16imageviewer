@@ -46,7 +46,7 @@ iff_module {
                             width = mkword(buffer[0], buffer[1])
                             height = mkword(buffer[2], buffer[3])
                             num_planes = buffer[8]
-                            num_colors = 1 << num_planes
+                            num_colors = $0001 << num_planes
                             compression = buffer[10]
                         }
                         else if chunk_id == "camg" {

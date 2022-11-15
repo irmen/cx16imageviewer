@@ -21,7 +21,7 @@ pcx_module {
                         uword height = mkword(header[$0b], header[$0a]) - mkword(header[$07], header[$06]) + 1
                         ubyte number_of_planes = header[$41]
                         uword palette_format = mkword(header[$45], header[$44])
-                        uword num_colors = 1<<bits_per_pixel
+                        uword num_colors = $0001<<bits_per_pixel
                         if number_of_planes == 1 {
                             if (width & 7) == 0 {
                                 gfx2.clear_screen()

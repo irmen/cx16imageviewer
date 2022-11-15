@@ -29,7 +29,7 @@ bmp_module {
                     bpp = header[$1c]
                     uword num_colors = header[$2e]
                     if num_colors == 0
-                        num_colors = 1<<bpp
+                        num_colors = $0001<<bpp
                     uword skip_hdr = header_size - 40
                     repeat skip_hdr
                         void fileloader.nextbyte()
