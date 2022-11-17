@@ -16,17 +16,24 @@ main {
         cx16.rombank(0)        ; switch to kernal rom (for faster file i/o)
 
         ; trick to check if we're running on sdcard or host system shared folder
-        txt.print("\nimage viewer for commander x16\nformats supported: .iff, .pcx, .bmp, .koa (c64 koala)\n\n")
-        if string.length(diskio.status(8)) {
-            txt.print("enter image file name or just enter for all on disk: ")
+        txt.print("\nimage viewer for commander x16\nformats supported: ")
+        uword ext
+        for ext in main.recognised_extension.extensions {
+            txt.print(ext)
+            txt.spc()
+        }
+        txt.nl()
+        txt.nl()
+        if list_image_files_on_disk() {
+            txt.print("\nenter file name or just enter to view all: ")
             ubyte i = txt.input_chars(diskio.list_filename)
-            gfx2.screen_mode(4)    ; 320*240, 256c
-            if i
-                attempt_load(diskio.list_filename)
+            if i {
+                gfx2.screen_mode(4)
+                if not attempt_load(diskio.list_filename)
+                    load_error("invalid file", diskio.list_filename)
+            }
             else
                 show_pics_sdcard()
-
-            ; txt.print("\nnothing more to do.\n")
         }
         else
             txt.print("files are read with sequential file loading.\nin the emulator this currently only works with files on an sd-card image.\nsorry :(\n")
@@ -37,6 +44,47 @@ main {
         cx16.rombank(4)        ; switch back to basic rom
     }
 
+    sub list_image_files_on_disk() -> bool {
+        if diskio.lf_start_list(8, 0) {
+            txt.print(" blocks   filename\n-------- -------------\n")
+            while diskio.lf_next_entry() {
+                uword extension = &diskio.list_filename + rfind(&diskio.list_filename, '.')
+                if recognised_extension(extension) {
+                    txt.spc()
+                    print_uw_right(diskio.list_blocks)
+                    txt.print("    ")
+                    txt.print(diskio.list_filename)
+                    txt.nl()
+                }
+            }
+            diskio.lf_end_list()
+            return true
+        }
+        return false
+    }
+
+    sub print_uw_right(uword value) {
+        if value < 10
+            txt.spc()
+        if value < 100
+            txt.spc()
+        if value < 1000
+            txt.spc()
+        if value < 10000
+            txt.spc()
+        txt.print_uw(value)
+    }
+
+    sub recognised_extension(str extension) -> bool {
+        str[] extensions = [".koa", ".iff", ".pcx", ".bmp"]
+        uword ext
+        for ext in extensions {
+            if string.compare(extension, ext)==0
+                return true
+        }
+        return false
+    }
+
     sub show_pics_sdcard() {
 
         ; load and show the images on the disk with the given extensions.
@@ -45,16 +93,17 @@ main {
         str[80] filename_ptrs
         ubyte num_files = diskio.list_files(8, 0, &filename_ptrs, len(filename_ptrs))
         if num_files {
-            while num_files {
-                num_files--
-                attempt_load(filename_ptrs[num_files])
-            }
+            gfx2.screen_mode(4)    ; 320*240, 256c
+            ubyte file_counter = 0
+            do {
+                void attempt_load(filename_ptrs[file_counter])
+                file_counter++
+            } until file_counter==num_files
         } else
             txt.print("no files in directory!\n")
-
     }
 
-    sub attempt_load(uword filenameptr) {
+    sub attempt_load(uword filenameptr) -> bool {
         ;txt.print(">> ")
         ;txt.print(filenameptr)
         ;txt.nl()
@@ -71,6 +120,7 @@ main {
                 }
                 else
                     sys.wait(180)
+                return true
             } else {
                 load_error(iff_module.load_error_details, filenameptr)
             }
@@ -80,6 +130,7 @@ main {
             ;txt.print("pcx\n")
             if pcx_module.show_image(filenameptr) {
                 sys.wait(180)
+                return true
             } else {
                 load_error(pcx_module.load_error_details, filenameptr)
             }
@@ -89,6 +140,7 @@ main {
             ;txt.print("koala\n")
             if koala_module.show_image(filenameptr) {
                 sys.wait(180)
+                return true
             } else {
                 load_error(koala_module.load_error_details, filenameptr)
             }
@@ -98,15 +150,17 @@ main {
             ;txt.print("bmp\n")
             if bmp_module.show_image(filenameptr) {
                 sys.wait(180)
+                return true
             } else {
                 load_error(bmp_module.load_error_details, filenameptr)
             }
         }
+        return false
     }
 
     sub load_error(uword what, uword filenameptr) {
         gfx2.screen_mode(0)      ; back to default text mode and palette
-        txt.print("load error\n")
+        txt.print("load error: ")
         txt.print(what)
         txt.print("\nfile: ")
         txt.print(filenameptr)

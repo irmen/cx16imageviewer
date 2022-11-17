@@ -11,7 +11,7 @@ iff_module {
     ubyte[16] cycle_lows
     ubyte[16] cycle_highs
     ubyte num_cycles
-    uword load_error_details
+    str load_error_details = "invalid file"
 
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
@@ -32,7 +32,6 @@ iff_module {
         ubyte cycle_ccrt = false
         num_cycles = 0
         cmap = memory("palette", 256*4, 0)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
-        load_error_details = "file"
 
         if fileloader.load(filenameptr, 0) {
             size = fileloader.nextbytes(buffer, 12)

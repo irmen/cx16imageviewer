@@ -4,11 +4,10 @@
 
 
 pcx_module {
-    uword load_error_details
+    str load_error_details = "invalid file"
 
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
-        load_error_details = "file"
 
         if fileloader.load(filenameptr, 0) {
             ubyte[128] header

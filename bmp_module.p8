@@ -2,7 +2,7 @@
 %import fileloader
 
 bmp_module {
-    uword load_error_details
+    str load_error_details = "invalid file"
 
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
@@ -15,7 +15,6 @@ bmp_module {
         uword offsety
         uword palette = memory("palette", 256*4, 0)
         uword total_read = 0
-        load_error_details = "file"
 
         if fileloader.load(filenameptr, 0) {
             size = fileloader.nextbytes(&header, $36)
