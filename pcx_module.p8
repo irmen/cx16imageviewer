@@ -103,9 +103,8 @@ bitmap {
                 cx16.r4L &= %00111111
                 cx16.r5L = fileloader.nextbyte()
                 if y_ok
-                    repeat cx16.r4L {
+                    repeat cx16.r4L
                         gfx2.set_8_pixels_from_bits(cx16.r5L, 1, 0)
-                    }
                 px += cx16.r4 * 8
             } else {
                 if y_ok
@@ -127,11 +126,14 @@ bitmap {
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
                 cx16.r5L = fileloader.nextbyte()
-                if y_ok
+                if y_ok {
+                    cx16.r5H = cx16.r5L & 15
+                    cx16.r5L >>= 4
                     repeat cx16.r4L {
-                        gfx2.next_pixel(cx16.r5L >> 4)
-                        gfx2.next_pixel(cx16.r5L & 15)
+                        gfx2.next_pixel(cx16.r5L)
+                        gfx2.next_pixel(cx16.r5H)
                     }
+                }
                 px += cx16.r4L*2
             } else {
                 if y_ok {
