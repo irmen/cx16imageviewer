@@ -9,7 +9,7 @@
 %import rle_module
 %import fileloader
 %zeropage basicsafe
-
+%option no_sysinit
 
 main {
     sub start() {
@@ -17,7 +17,7 @@ main {
         cx16.rombank(0)        ; switch to kernal rom (for faster file i/o)
 
         ; trick to check if we're running on sdcard or host system shared folder
-        txt.print("\nimage viewer for commander x16\nformats supported: ")
+        txt.print("\x93\nimage viewer for commander x16\nformats supported: ")
         uword ext
         for ext in main.recognised_extension.extensions {
             txt.print(ext)
