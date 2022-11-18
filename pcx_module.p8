@@ -31,9 +31,9 @@ pcx_module {
                                 else if num_colors == 2
                                     palette.set_monochrome($000, $fff)
                                 when bits_per_pixel {
-                                    8 -> load_ok = bitmap.do8bpp(width, height)
-                                    4 -> load_ok = bitmap.do4bpp(width, height)
-                                    1 -> load_ok = bitmap.do1bpp(width, height)
+                                    8 -> load_ok = pcxbitmap.do8bpp(width, height)
+                                    4 -> load_ok = pcxbitmap.do4bpp(width, height)
+                                    1 -> load_ok = pcxbitmap.do1bpp(width, height)
                                 }
                                 if load_ok {
                                     ubyte haspalette = fileloader.nextbyte()
@@ -67,18 +67,16 @@ pcx_module {
     }
 }
 
-bitmap {
+pcxbitmap {
 
     uword offsetx
     uword offsety
     uword @zp py
     uword @zp px
-    ubyte y_ok
 
     sub start_plot(uword width, uword height) {
         offsetx = 0
         offsety = 0
-        y_ok = true
         py = 0
         px = 0
         if width < gfx2.width
@@ -87,11 +85,10 @@ bitmap {
             offsety = (gfx2.height - height) / 2
     }
 
-    sub next_scanline() {
+    sub next_scanline() -> bool {
         px = 0
         py++
-        y_ok = py < gfx2.height
-        gfx2.position(offsetx, offsety+py)
+        return py < gfx2.height
     }
 
     sub do1bpp(uword width, uword height) -> ubyte {
@@ -102,17 +99,16 @@ bitmap {
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
                 cx16.r5L = fileloader.nextbyte()
-                if y_ok
-                    repeat cx16.r4L
-                        gfx2.set_8_pixels_from_bits(cx16.r5L, 1, 0)
+                repeat cx16.r4L
+                    gfx2.set_8_pixels_from_bits(cx16.r5L, 1, 0)
                 px += cx16.r4 * 8
             } else {
-                if y_ok
-                    gfx2.set_8_pixels_from_bits(cx16.r4L, 1, 0)
+                gfx2.set_8_pixels_from_bits(cx16.r4L, 1, 0)
                 px += 8
             }
             if px==width
-                next_scanline()
+                if not next_scanline()
+                    return true
         }
 
         return true
@@ -126,24 +122,21 @@ bitmap {
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
                 cx16.r5L = fileloader.nextbyte()
-                if y_ok {
-                    cx16.r5H = cx16.r5L & 15
-                    cx16.r5L >>= 4
-                    repeat cx16.r4L {
-                        gfx2.next_pixel(cx16.r5L)
-                        gfx2.next_pixel(cx16.r5H)
-                    }
+                cx16.r5H = cx16.r5L & 15
+                cx16.r5L >>= 4
+                repeat cx16.r4L {
+                    gfx2.next_pixel(cx16.r5L)
+                    gfx2.next_pixel(cx16.r5H)
                 }
                 px += cx16.r4L*2
             } else {
-                if y_ok {
-                    gfx2.next_pixel(cx16.r4L >> 4)
-                    gfx2.next_pixel(cx16.r4L & 15)
-                }
+                gfx2.next_pixel(cx16.r4L >> 4)
+                gfx2.next_pixel(cx16.r4L & 15)
                 px += 2
             }
             if px==width
-                next_scanline()
+                if not next_scanline()
+                    return true
         }
 
         return true
@@ -157,17 +150,16 @@ bitmap {
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
                 cx16.r5L = fileloader.nextbyte()
-                if y_ok
-                    repeat cx16.r4L
-                        gfx2.next_pixel(cx16.r5L)
+                repeat cx16.r4L
+                    gfx2.next_pixel(cx16.r5L)
                 px += cx16.r4L
             } else {
-                if y_ok
-                    gfx2.next_pixel(cx16.r4L)
+                gfx2.next_pixel(cx16.r4L)
                 px++
             }
             if px==width
-                next_scanline()
+                if not next_scanline()
+                    return true
         }
 
         return true
