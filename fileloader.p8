@@ -6,10 +6,12 @@ fileloader {
     uword @shared @requirezp data_ptr
 
     sub load(str filename, uword address) -> uword {
+        ; returns end address, and also start ram bank in cx16.r0L and end ram bank in cx16.r1L.
         if not address {
             address = $a000
             cx16.rambank(1)
         }
+        ubyte startbank = cx16.getrambank()
         data_ptr = address
         txt.print("loading ")
         txt.print(filename)
@@ -18,6 +20,8 @@ fileloader {
         ;c64.SETMSG(0)
         txt.nl()
         @(end) = 0
+        cx16.r0L = startbank
+        cx16.r1L = cx16.getrambank()
         cx16.rambank(1)
         return end
     }
