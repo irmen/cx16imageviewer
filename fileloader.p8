@@ -1,4 +1,3 @@
-%import textio
 %import diskio
 
 fileloader {
@@ -13,12 +12,9 @@ fileloader {
         }
         ubyte startbank = cx16.getrambank()
         data_ptr = address
-        txt.print("loading ")
-        txt.print(filename)
         ;c64.SETMSG(%10000000)       ; enable kernal status messages for load
         uword end = diskio.load_raw(8, filename, address)
         ;c64.SETMSG(0)
-        txt.nl()
         @(end) = 0
         cx16.r0L = startbank
         cx16.r1L = cx16.getrambank()

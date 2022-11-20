@@ -106,13 +106,8 @@ main {
     }
 
     sub attempt_load(uword filenameptr) -> bool {
-        ;txt.print(">> ")
-        ;txt.print(filenameptr)
-        ;txt.nl()
         uword extension = filenameptr + rfind(filenameptr, '.')
         if string.compare(extension, ".iff")==0 {
-            ;txt.print("loading ")
-            ;txt.print("iff\n")
             if iff_module.show_image(filenameptr) {
                 if iff_module.num_cycles {
                     repeat 500 {
@@ -128,8 +123,6 @@ main {
             }
         }
         else if string.compare(extension, ".pcx")==0 {
-            ;txt.print("loading ")
-            ;txt.print("pcx\n")
             if pcx_module.show_image(filenameptr) {
                 sys.wait(180)
                 return true
@@ -138,8 +131,6 @@ main {
             }
         }
         else if string.compare(extension,".koa")==0 {
-            ;txt.print("loading ")
-            ;txt.print("koala\n")
             if koala_module.show_image(filenameptr) {
                 sys.wait(180)
                 return true
@@ -148,8 +139,6 @@ main {
             }
         }
         else if string.compare(extension, ".bmp")==0  {
-            ;txt.print("loading ")
-            ;txt.print("bmp\n")
             if bmp_module.show_image(filenameptr) {
                 sys.wait(180)
                 return true
@@ -158,8 +147,6 @@ main {
             }
         }
         else if string.compare(extension, ".rle")==0  {
-            ;txt.print("loading ")
-            ;txt.print("rle\n")
             if rle_module.show_image(filenameptr) {
                 sys.wait(180)
                 return true
