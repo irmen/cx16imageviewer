@@ -8,7 +8,7 @@ rle_module {
 
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
-        uword filesize = fileloader.load(filenameptr, $a000) - $a000   ; load into hiram
+        uword filesize = fileloader.load(filenameptr, 0) - $a000   ; load into hiram
         filesize += 8192 * (cx16.r1L - cx16.r0L)
         if filesize {
             ; TODO : implement extended format that includes some sort of header with XRLE magic number + width/height/bitdepth
