@@ -92,15 +92,15 @@ main {
         ; load and show the images on the disk with the given extensions.
         ; this only works in the emulator V38 with an sd-card image with the files on it.
 
-        str[80] filename_ptrs
-        ubyte num_files = diskio.list_files(8, 0, &filename_ptrs, len(filename_ptrs))
+        uword filenames = memory("filenames", 20*200, 0)
+        uword @zp names_ptr = filenames
+        ubyte num_files = diskio.list_filenames(8, 0, filenames, sizeof(filenames))
         if num_files {
             gfx2.screen_mode(4)    ; 320*240, 256c
-            ubyte file_counter = 0
-            do {
-                void attempt_load(filename_ptrs[file_counter])
-                file_counter++
-            } until file_counter==num_files
+            while @(names_ptr) {
+                void attempt_load(names_ptr)
+                names_ptr += string.length(names_ptr) + 1
+            }
         } else
             txt.print("no files in directory!\n")
     }
