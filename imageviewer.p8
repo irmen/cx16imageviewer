@@ -40,6 +40,7 @@ main {
             txt.print("files are read with sequential file loading.\nin the emulator this currently only works with files on an sd-card image.\nsorry :(\n")
 
         gfx2.screen_mode(0)      ; back to default text mode and palette
+        palette.set_c64pepto()
         txt.print("that was all folks!\n")
 
         cx16.rombank(4)        ; switch back to basic rom
@@ -171,6 +172,7 @@ main {
 
     sub load_error(uword what, uword filenameptr) {
         gfx2.screen_mode(0)      ; back to default text mode and palette
+        palette.set_c64pepto()
         txt.print("load error: ")
         txt.print(what)
         txt.print("\nfile: ")
