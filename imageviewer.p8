@@ -106,6 +106,7 @@ main {
     }
 
     sub attempt_load(uword filenameptr) -> bool {
+        fileloader.load_error_details = 0
         uword extension = filenameptr + rfind(filenameptr, '.')
         if string.compare(extension, ".iff")==0 {
             if iff_module.show_image(filenameptr) {
@@ -119,7 +120,7 @@ main {
                     sys.wait(180)
                 return true
             } else {
-                load_error(iff_module.load_error_details, filenameptr)
+                load_error(fileloader.load_error_details, filenameptr)
             }
         }
         else if string.compare(extension, ".pcx")==0 {
@@ -127,7 +128,7 @@ main {
                 sys.wait(180)
                 return true
             } else {
-                load_error(pcx_module.load_error_details, filenameptr)
+                load_error(fileloader.load_error_details, filenameptr)
             }
         }
         else if string.compare(extension,".koa")==0 {
@@ -135,7 +136,7 @@ main {
                 sys.wait(180)
                 return true
             } else {
-                load_error(koala_module.load_error_details, filenameptr)
+                load_error(fileloader.load_error_details, filenameptr)
             }
         }
         else if string.compare(extension, ".bmp")==0  {
@@ -143,7 +144,7 @@ main {
                 sys.wait(180)
                 return true
             } else {
-                load_error(bmp_module.load_error_details, filenameptr)
+                load_error(fileloader.load_error_details, filenameptr)
             }
         }
         else if string.compare(extension, ".rle")==0  {
@@ -151,7 +152,7 @@ main {
                 sys.wait(180)
                 return true
             } else {
-                load_error(rle_module.load_error_details, filenameptr)
+                load_error(fileloader.load_error_details, filenameptr)
             }
         }
         return false
@@ -161,7 +162,8 @@ main {
         gfx2.screen_mode(0)      ; back to default text mode and palette
         palette.set_c64pepto()
         txt.print("load error: ")
-        txt.print(what)
+        if what
+            txt.print(what)
         txt.print("\nfile: ")
         txt.print(filenameptr)
         txt.nl()

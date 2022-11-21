@@ -4,8 +4,6 @@
 
 
 rle_module {
-    str load_error_details = "invalid file"
-
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
         uword filesize = fileloader.load(filenameptr, 0) - $a000   ; load into hiram
@@ -38,7 +36,7 @@ rle_module {
                 }
                 load_ok = true
             } else
-                load_error_details = "no palette"
+                fileloader.load_error_details = "no palette"
         }
 
         return load_ok

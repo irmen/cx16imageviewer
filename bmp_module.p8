@@ -2,8 +2,6 @@
 %import fileloader
 
 bmp_module {
-    str load_error_details = "invalid file"
-
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
         ubyte[$36] header
@@ -44,13 +42,13 @@ bmp_module {
                         load_ok = true
                     }
                     else
-                        load_error_details = "invalid palette size"
+                        fileloader.load_error_details = "invalid palette size"
                 }
                 else
-                    load_error_details = "not bmp"
+                    fileloader.load_error_details = "not bmp"
             }
             else
-                load_error_details = "no header"
+                fileloader.load_error_details = "no header"
         }
 
         return load_ok

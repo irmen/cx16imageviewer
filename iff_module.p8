@@ -11,7 +11,6 @@ iff_module {
     ubyte[16] cycle_lows
     ubyte[16] cycle_highs
     ubyte num_cycles
-    str load_error_details = "invalid file"
 
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
@@ -52,7 +51,7 @@ iff_module {
                             void fileloader.nextbytes(buffer, chunk_size_lo)
                             camg = mkword(buffer[2], buffer[3])
                             if camg & $0800 {
-                                load_error_details = "ham mode not supported"
+                                fileloader.load_error_details = "ham mode not supported"
                                 break
                             }
                         }
@@ -118,10 +117,10 @@ iff_module {
                         }
                     }
                 } else
-                    load_error_details = "not iff ilbm"
+                    fileloader.load_error_details = "not iff ilbm"
             }
             else
-                load_error_details = "no header"
+                fileloader.load_error_details = "no header"
         }
 
         return load_ok

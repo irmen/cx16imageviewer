@@ -3,6 +3,7 @@
 fileloader {
 
     uword @shared @requirezp data_ptr
+    uword load_error_details                ; pointer to string containing error message
 
     sub load(str filename, uword address) -> uword {
         ; returns end address, and also start ram bank in cx16.r0L and end ram bank in cx16.r1L.

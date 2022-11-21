@@ -4,8 +4,6 @@
 
 
 pcx_module {
-    str load_error_details = "invalid file"
-
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
 
@@ -39,28 +37,28 @@ pcx_module {
                                     ubyte haspalette = fileloader.nextbyte()
                                     if haspalette == 12 {
                                         ; there is 256 colors of palette data at the end
-                                        uword palette_mem = sys.progend()
+                                        uword palette_mem = memory("palette", 256*4, 0)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
                                         load_ok = false
                                         size = fileloader.nextbytes(palette_mem, 3*256)
                                         if size==3*256 {
                                             load_ok = true
                                             palette.set_rgb8(palette_mem, num_colors)
                                         } else
-                                            load_error_details = "invalid palette size"
+                                            fileloader.load_error_details = "invalid palette size"
                                     } else
-                                        load_error_details = "no palette data"
+                                        fileloader.load_error_details = "no palette data"
                                 } else
-                                    load_error_details = "bitmap decode error"
+                                    fileloader.load_error_details = "bitmap decode error"
                             } else
-                                load_error_details = "width not multiple of 8"
+                                fileloader.load_error_details = "width not multiple of 8"
                         } else
-                            load_error_details = ">256 colors"
+                            fileloader.load_error_details = ">256 colors"
                     } else
-                        load_error_details = "invalid bpp"
+                        fileloader.load_error_details = "invalid bpp"
                 } else
-                    load_error_details = "no pcx"
+                    fileloader.load_error_details = "no pcx"
             } else
-                load_error_details = "no header"
+                fileloader.load_error_details = "no header"
         }
 
         return load_ok
