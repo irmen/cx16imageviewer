@@ -7,7 +7,6 @@ Supports:
 - IFF files, including CRNG and CCRT color cycling!
 - BMP files
 - PCX files
-- RLE files (special to the X16)
 
 of 2 to 256 colors. Display resolution is 320x240.
 

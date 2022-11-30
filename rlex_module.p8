@@ -2,14 +2,15 @@
 %import fileloader
 %import palette
 
+; NOTE: This image format is not added by default as it is a very niche format and there are no available encoders yet.
 
-rle_module {
+rlex_module_XXX {
     sub show_image(uword filenameptr) -> ubyte {
         ubyte load_ok = false
         uword filesize = fileloader.load(filenameptr, 0) - $a000   ; load into hiram
         filesize += 8192 * (cx16.r1L - cx16.r0L)
         if filesize {
-            ; TODO : implement extended format that includes some sort of header with XRLE magic number + width/height/bitdepth
+            ; TODO : implement extended format that includes some sort of header with RLX magic number + width/height/bitdepth
             ; first 2 bytes are a dummy prg header
             void fileloader.nextbyte()
             void fileloader.nextbyte()

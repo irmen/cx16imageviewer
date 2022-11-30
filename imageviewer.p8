@@ -6,7 +6,7 @@
 %import iff_module
 %import pcx_module
 %import bmp_module
-%import rle_module
+;; %import rlex_module
 %import fileloader
 %zeropage basicsafe
 %option no_sysinit
@@ -78,7 +78,7 @@ main {
     }
 
     sub recognised_extension(str extension) -> bool {
-        str[] extensions = [".koa", ".iff", ".pcx", ".bmp", ".rle"]
+        str[] extensions = [".koa", ".iff", ".pcx", ".bmp"]
         uword ext
         for ext in extensions {
             if string.compare(extension, ext)==0
@@ -147,14 +147,14 @@ main {
                 load_error(fileloader.load_error_details, filenameptr)
             }
         }
-        else if string.compare(extension, ".rle")==0  {
-            if rle_module.show_image(filenameptr) {
-                sys.wait(180)
-                return true
-            } else {
-                load_error(fileloader.load_error_details, filenameptr)
-            }
-        }
+;        else if string.compare(extension, ".rle")==0  {   ; or maybe .rlx
+;            if rle_module.show_image(filenameptr) {
+;                sys.wait(180)
+;                return true
+;            } else {
+;                load_error(fileloader.load_error_details, filenameptr)
+;            }
+;        }
         return false
     }
 

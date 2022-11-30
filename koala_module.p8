@@ -18,7 +18,7 @@ koala_module {
 
     sub convert_koalapic() {
         cx16.r14 = load_location + 2 + 8000     ; colors_data_location
-        cx16.r15 = cx16.r14 + 1000          ; bg_colors_data_location
+        cx16.r15 = cx16.r14 + 1000              ; bg_colors_data_location
         cx16.r13L = @(load_location + 2 + 8000 + 1000 + 1000) & 15     ; background_color
         uword bitmap_ptr = load_location+2
 
