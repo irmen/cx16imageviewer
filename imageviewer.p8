@@ -39,7 +39,7 @@ main {
         else
             txt.print("files are read with sequential file loading.\nin the emulator this currently only works with files on an sd-card image.\nsorry :(\n")
 
-        gfx2.screen_mode(0)      ; back to default text mode and palette
+        gfx2.screen_mode(0)      ; back to default text mode
         palette.set_c64pepto()
         txt.print("that was all folks!\n")
 

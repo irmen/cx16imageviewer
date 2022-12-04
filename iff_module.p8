@@ -5,11 +5,11 @@
 iff_module {
     uword cmap
     uword num_colors
-    uword[16] cycle_rates
-    uword[16] cycle_rate_ticks
-    ubyte[16] cycle_reverseflags
-    ubyte[16] cycle_lows
-    ubyte[16] cycle_highs
+    uword[24] cycle_rates
+    uword[24] cycle_rate_ticks
+    ubyte[24] cycle_reverseflags
+    ubyte[24] cycle_lows
+    ubyte[24] cycle_highs
     ubyte num_cycles
 
     sub show_image(uword filenameptr) -> ubyte {
@@ -17,6 +17,7 @@ iff_module {
         uword size
         ubyte[32] buffer
         uword camg = 0
+        ubyte format            ; 'i' (ILBM) or 'p' (PBM)
         str chunk_id = "????"
         uword chunk_size_hi
         uword chunk_size_lo
@@ -35,8 +36,16 @@ iff_module {
         if fileloader.load(filenameptr, 0) {
             size = fileloader.nextbytes(buffer, 12)
             if size==12 {
-                if buffer[0]=='f' and buffer[1]=='o' and buffer[2]=='r' and buffer[3]=='m'
-                        and buffer[8]=='i' and buffer[9]=='l' and buffer[10]=='b' and buffer[11]=='m'{
+                if buffer[0]=='f' and buffer[1]=='o' and buffer[2]=='r' and buffer[3]=='m' {
+                    if buffer[9]=='l' and buffer[10]=='b' and buffer[11]=='m'
+                        format = buffer[8]
+                    else if buffer[9]=='b' and buffer[10]=='m' and buffer[11]==' '
+                        format = buffer[8]
+
+                    if not format {
+                        fileloader.load_error_details = "not ilbm or pbm"
+                        return false
+                    }
 
                     while read_chunk_header() {
                         if chunk_id == "bmhd" {
@@ -65,6 +74,8 @@ iff_module {
                                 cycle_crng = true
                                 void fileloader.nextbytes(buffer, chunk_size_lo)
                                 ubyte flags = buffer[5]
+                                if not flags
+                                    flags = buffer[4]   ; DOS deluxepaint writes them sometimes in the other byte?
                                 if flags & 1 {
                                     cycle_rates[num_cycles] = mkword(buffer[2], buffer[3])
                                     cycle_rate_ticks[num_cycles] = 1
@@ -104,12 +115,22 @@ iff_module {
                                 height /= 2     ; interlaced: just skip every odd scanline later
                             if camg & $0080 and have_cmap
                                 make_ehb_palette()
-                            palette.set_rgb8(cmap, num_colors)
-                            if compression
-                                decode_rle()
-                            else
-                                decode_raw()
-                            load_ok = true
+                            if format=='i' {
+                                palette.set_rgb8(cmap, num_colors)
+                                if compression
+                                    decode_rle()
+                                else
+                                    decode_raw()
+                                load_ok = true
+                            }
+                            else if format=='p' {
+                                palette.set_rgb8(cmap, num_colors)
+                                if compression
+                                    decode_pbm_byterun1()
+                                else
+                                    decode_pbm_raw()
+                                load_ok = true
+                            }
                             break   ; done after body
                         }
                         else {
@@ -159,6 +180,7 @@ iff_module {
         uword interleave_stride
         uword offsetx
         uword offsety
+        uword @zp y
 
         sub start_plot() {
             bitplane_stride = lsb(width>>3)
@@ -177,8 +199,7 @@ iff_module {
 
         sub decode_raw() {
             start_plot()
-            ubyte @zp interlaced = (camg & $0004) != 0
-            uword @zp y
+            ubyte interlaced = (camg & $0004) != 0
             for y in 0 to height-1 {
                 void fileloader.nextbytes(scanline_data_ptr, interleave_stride)
                 if interlaced
@@ -191,7 +212,6 @@ iff_module {
         sub decode_rle() {
             start_plot()
             ubyte interlaced = (camg & $0004) != 0
-            uword @zp y
             for y in 0 to height-1 {
                 decode_rle_scanline()
                 if interlaced
@@ -284,6 +304,39 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
 ;                cx16.r5L >>= 8-num_planes
 
                 gfx2.next_pixel(cx16.r5L)
+            }
+        }
+
+        sub decode_pbm_byterun1() {
+            start_plot()
+            gfx2.position(0, 0)
+            repeat height {
+                cx16.r5 = width
+                while cx16.r5 {
+                    cx16.r3L = fileloader.nextbyte()
+                    if cx16.r3L > 128 {
+                        cx16.r3H = fileloader.nextbyte()
+                        cx16.r6 = 257-cx16.r3L
+                        repeat cx16.r6
+                            gfx2.next_pixel(cx16.r3H)
+                        cx16.r5 -= cx16.r6
+                    } else if cx16.r3L < 128 {
+                        cx16.r3L++
+                        repeat cx16.r3L
+                            gfx2.next_pixel(fileloader.nextbyte())
+                        cx16.r5 -= cx16.r3L
+                    }
+                }
+            }
+        }
+
+        sub decode_pbm_raw() {
+            start_plot()
+            gfx2.position(0, 0)
+            repeat height {
+                repeat width {
+                    gfx2.next_pixel(fileloader.nextbyte())
+                }
             }
         }
     }
