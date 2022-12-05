@@ -266,8 +266,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
                     sta  P8ZP_SCRATCH_B1        ; mask
                     phx
                     ldx  num_planes
-                    ldy  #0
--                   lda  (P8ZP_SCRATCH_W1),y
+-                   lda  (P8ZP_SCRATCH_W1)
                     clc
                     and  P8ZP_SCRATCH_B1
                     beq  +
@@ -286,9 +285,8 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
                     sec
                     sbc  num_planes
                     beq  +
-                    tay
 -                   lsr  cx16.r5L
-                    dey
+                    dec  a
                     bne  -
 +
                 }}

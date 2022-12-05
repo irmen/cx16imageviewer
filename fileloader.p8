@@ -33,10 +33,10 @@ fileloader {
         return count
     }
 
-    asmsub nextbyte() -> ubyte @A {
+    asmsub nextbyte() clobbers(A) -> ubyte @Y {
         %asm {{
             lda  (data_ptr)
-            pha
+            tay
             inc  data_ptr
             bne  +
             inc  data_ptr+1
@@ -47,8 +47,7 @@ fileloader {
             lda  #$a0
             sta  data_ptr+1
             inc  $00            ; next ram bank
-+           pla
-            rts
++           rts
         }}
     }
 }
