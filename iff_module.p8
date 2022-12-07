@@ -50,6 +50,7 @@ iff_module {
                     while read_chunk_header() {
                         if chunk_id == "bmhd" {
                             void fileloader.nextbytes(buffer, chunk_size_lo)
+                            read_aligned()
                             width = mkword(buffer[0], buffer[1])
                             height = mkword(buffer[2], buffer[3])
                             num_planes = buffer[8]
@@ -58,6 +59,7 @@ iff_module {
                         }
                         else if chunk_id == "camg" {
                             void fileloader.nextbytes(buffer, chunk_size_lo)
+                            read_aligned()
                             camg = mkword(buffer[2], buffer[3])
                             if camg & $0800 {
                                 fileloader.load_error_details = "ham mode not supported"
@@ -67,12 +69,14 @@ iff_module {
                         else if chunk_id == "cmap" {
                             have_cmap = true
                             void fileloader.nextbytes(cmap, chunk_size_lo)
+                            read_aligned()
                         }
                         else if chunk_id == "crng" {
                             ; DeluxePaint color cycle range
                             if not cycle_ccrt {
                                 cycle_crng = true
                                 void fileloader.nextbytes(buffer, chunk_size_lo)
+                                read_aligned()
                                 ubyte flags = buffer[5]
                                 if not flags
                                     flags = buffer[4]   ; DOS deluxepaint writes them sometimes in the other byte?
@@ -92,6 +96,7 @@ iff_module {
                             if not cycle_crng {
                                 cycle_ccrt = true
                                 void fileloader.nextbytes(buffer, chunk_size_lo)
+                                read_aligned()
                                 ubyte direction = buffer[1]
                                 if direction {
                                     ; delay_sec = buffer[4] * 256 * 256 * 256 + buffer[5] * 256 * 256 + buffer[6] * 256 + buffer[7]
@@ -161,10 +166,30 @@ iff_module {
         }
 
         sub skip_chunk() {
-            repeat lsb(chunk_size_hi)*8 + (chunk_size_lo >> 13)
-                void fileloader.nextbytes(scanline_data_ptr, $2000)
+            if chunk_size_hi > 255 {
+                txt.print("outrageous chunk size. corrupt?")
+                sys.exit(1)
+            }
 
-            void fileloader.nextbytes(scanline_data_ptr, chunk_size_lo & $1fff)
+            repeat lsb(chunk_size_hi) {
+                repeat 256 {
+                    void fileloader.nextbytes(scanline_data_ptr, 256)
+                }
+            }
+            repeat chunk_size_lo
+                void fileloader.nextbyte()
+            read_aligned()
+        }
+
+        sub read_aligned() {
+            ; IFF spec says that:
+            ; "All data objects larger than a byte are aligned on even byte addresses
+            ;  relative to the start of the file. This may require padding.""
+            ; "This means that every odd-length "chunk" (see below) must be padded
+            ;  so that the next one will fall on an even boundary."
+            ; Check that we read such a padding byte if it occurs
+            if chunk_size_lo & 1
+                void fileloader.nextbyte()
         }
 
         sub make_ehb_palette() {

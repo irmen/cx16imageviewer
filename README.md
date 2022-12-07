@@ -18,4 +18,5 @@ Simply type ``p8compile imageviewer.p8 -target cx16`` or just ``make``.
 
 ## Todo
 
+- fix the lack of colorcycling in the .LBM images saved by Dos Dpaint
 - IFF: implement Blend Shifting see http://www.effectgames.com/demos/canvascycle/palette.js

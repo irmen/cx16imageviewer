@@ -78,7 +78,7 @@ main {
     }
 
     sub recognised_extension(str extension) -> bool {
-        str[] extensions = [".koa", ".iff", ".pcx", ".bmp"]
+        str[] extensions = [".koa", ".iff", ".lbm", ".pcx", ".bmp"]
         uword ext
         for ext in extensions {
             if string.compare(extension, ext)==0
@@ -108,7 +108,7 @@ main {
     sub attempt_load(uword filenameptr) -> bool {
         fileloader.load_error_details = 0
         uword extension = filenameptr + rfind(filenameptr, '.')
-        if string.compare(extension, ".iff")==0 {
+        if string.compare(extension, ".iff")==0 or string.compare(extension, ".lbm")==0 {
             if iff_module.show_image(filenameptr) {
                 if iff_module.num_cycles {
                     repeat 500 {
