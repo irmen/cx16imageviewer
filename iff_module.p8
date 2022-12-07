@@ -80,8 +80,10 @@ iff_module {
                                 ubyte flags = buffer[5]
                                 if not flags
                                     flags = buffer[4]   ; DOS deluxepaint writes them sometimes in the other byte?
-                                if flags & 1 {
-                                    cycle_rates[num_cycles] = mkword(buffer[2], buffer[3])
+                                ; bit 0 should be "active" flag but many images don't have this set even though the range is active.
+                                ; so we check the cycling speed instead to see if it is >0.
+                                cycle_rates[num_cycles] = mkword(buffer[2], buffer[3])
+                                if cycle_rates[num_cycles] {
                                     cycle_rate_ticks[num_cycles] = 1
                                     cycle_lows[num_cycles] = buffer[6]
                                     cycle_highs[num_cycles] = buffer[7]
