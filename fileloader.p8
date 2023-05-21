@@ -14,13 +14,20 @@ fileloader {
         ubyte startbank = cx16.getrambank()
         data_ptr = address
         ;c64.SETMSG(%10000000)       ; enable kernal status messages for load
-        uword end = diskio.load_raw(8, filename, address)
+        uword end = diskio.load_raw(filename, address)
         ;c64.SETMSG(0)
+        if end==0
+            return 0
         @(end) = 0
         cx16.r0L = startbank
         cx16.r1L = cx16.getrambank()
         cx16.rambank(1)
         return end
+    }
+
+    sub close() {
+        ; do nothing as everything is handled from memory
+        ; but could be used to close a file stream
     }
 
     sub nextbytes(uword buffer, uword count) -> uword {

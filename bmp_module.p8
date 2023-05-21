@@ -49,6 +49,8 @@ bmp_module {
             }
             else
                 fileloader.load_error_details = "no header"
+
+            fileloader.close()
         }
 
         return load_ok

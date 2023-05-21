@@ -59,6 +59,8 @@ pcx_module {
                     fileloader.load_error_details = "no pcx"
             } else
                 fileloader.load_error_details = "no header"
+
+            fileloader.close()
         }
 
         return load_ok

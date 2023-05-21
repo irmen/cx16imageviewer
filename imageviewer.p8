@@ -47,7 +47,7 @@ main {
     }
 
     sub list_image_files_on_disk() -> bool {
-        if diskio.lf_start_list(8, 0) {
+        if diskio.lf_start_list(0) {
             txt.print(" blocks   filename\n-------- -------------\n")
             while diskio.lf_next_entry() {
                 uword extension = &diskio.list_filename + rfind(&diskio.list_filename, '.')
@@ -94,7 +94,7 @@ main {
 
         uword filenames = memory("filenames", 20*200, 0)
         uword @zp names_ptr = filenames
-        ubyte num_files = diskio.list_filenames(8, 0, filenames, sizeof(filenames))
+        ubyte num_files = diskio.list_filenames(0, filenames, sizeof(filenames))
         if num_files {
             gfx2.screen_mode(4)    ; 320*240, 256c
             while @(names_ptr) {

@@ -11,6 +11,7 @@ koala_module {
             ; set a better C64 color palette, the X16's default is too saturated
             palette.set_c64pepto()
             convert_koalapic()
+            fileloader.close()
             return true
         }
         return false

@@ -38,6 +38,8 @@ rlex_module_XXX {
                 load_ok = true
             } else
                 fileloader.load_error_details = "no palette"
+
+            fileloader.close()
         }
 
         return load_ok
