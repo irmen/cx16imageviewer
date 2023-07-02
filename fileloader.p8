@@ -42,17 +42,17 @@ fileloader {
 
     asmsub nextbyte() clobbers(A) -> ubyte @Y {
         %asm {{
-            lda  (data_ptr)
+            lda  (p8_data_ptr)
             tay
-            inc  data_ptr
+            inc  p8_data_ptr
             bne  +
-            inc  data_ptr+1
-+           lda  data_ptr+1
+            inc  p8_data_ptr+1
++           lda  p8_data_ptr+1
             cmp  #$c0
             bne  +
-            stz  data_ptr
+            stz  p8_data_ptr
             lda  #$a0
-            sta  data_ptr+1
+            sta  p8_data_ptr+1
             inc  $00            ; next ram bank
 +           rts
         }}

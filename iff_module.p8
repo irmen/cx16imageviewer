@@ -284,9 +284,9 @@ iff_module {
                 %asm {{
                     bra  +
 _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
-+                   lda  pixptr
++                   lda  p8_pixptr
                     sta  P8ZP_SCRATCH_W1
-                    lda  pixptr+1
+                    lda  p8_pixptr+1
                     sta  P8ZP_SCRATCH_W1+1
                     lda  x
                     and  #7
@@ -294,7 +294,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
                     lda  _masks,y
                     sta  P8ZP_SCRATCH_B1        ; mask
                     phx
-                    ldx  num_planes
+                    ldx  p8_num_planes
 -                   lda  (P8ZP_SCRATCH_W1)
                     clc
                     and  P8ZP_SCRATCH_B1
@@ -303,7 +303,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
 +                   ror  cx16.r5L                   ; shift planar bit into chunky byte
                     lda  P8ZP_SCRATCH_W1
                     ; clc
-                    adc  bitplane_stride
+                    adc  p8_bitplane_stride
                     sta  P8ZP_SCRATCH_W1
                     bcc  +
                     inc  P8ZP_SCRATCH_W1+1
@@ -312,7 +312,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
                     plx
                     lda  #8
                     sec
-                    sbc  num_planes
+                    sbc  p8_num_planes
                     beq  +
 -                   lsr  cx16.r5L
                     dec  a
