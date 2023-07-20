@@ -288,7 +288,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
                     sta  P8ZP_SCRATCH_W1
                     lda  p8_pixptr+1
                     sta  P8ZP_SCRATCH_W1+1
-                    lda  x
+                    lda  p8_x
                     and  #7
                     tay
                     lda  _masks,y
