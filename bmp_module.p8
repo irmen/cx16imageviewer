@@ -36,7 +36,7 @@ bmp_module {
                         total_read += size
                         repeat bm_data_offset - total_read
                             void fileloader.nextbyte()
-                        gfx2.clear_screen()
+                        gfx2.clear_screen(0)
                         custompalette.set_bgra(palette, num_colors)
                         decode_bitmap()
                         load_ok = true

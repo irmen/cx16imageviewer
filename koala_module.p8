@@ -23,7 +23,7 @@ koala_module {
         cx16.r13L = @(load_location + 2 + 8000 + 1000 + 1000) & 15     ; background_color
         uword bitmap_ptr = load_location+2
 
-        gfx2.clear_screen()
+        gfx2.clear_screen(0)
         uword offsety = (gfx2.height - 200) / 2
 
         ubyte cy

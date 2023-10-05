@@ -21,7 +21,7 @@ pcx_module {
                         uword num_colors = $0001<<bits_per_pixel
                         if number_of_planes == 1 {
                             if (width & 7) == 0 {
-                                gfx2.clear_screen()
+                                gfx2.clear_screen(0)
                                 if palette_format==2
                                     custompalette.set_grayscale256()
                                 else if num_colors == 16

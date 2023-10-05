@@ -29,7 +29,7 @@ main {
             txt.print("\nenter file name or just enter to view all: ")
             ubyte i = txt.input_chars(diskio.list_filename)
             if i {
-                gfx2.screen_mode(4)
+                gfx2.screen_mode(1)
                 if not attempt_load(diskio.list_filename)
                     load_error("invalid file", diskio.list_filename)
             }
@@ -96,7 +96,7 @@ main {
         uword @zp names_ptr = filenames
         ubyte num_files = diskio.list_filenames(0, filenames, sizeof(filenames))
         if num_files {
-            gfx2.screen_mode(4)    ; 320*240, 256c
+            gfx2.screen_mode(1)    ; 320*240, 256c
             while @(names_ptr) {
                 void attempt_load(names_ptr)
                 names_ptr += string.length(names_ptr) + 1

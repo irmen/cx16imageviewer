@@ -117,7 +117,7 @@ iff_module {
                                 skip_chunk()
                         }
                         else if chunk_id == "body" {
-                            gfx2.clear_screen()
+                            gfx2.clear_screen(0)
                             if camg & $0004
                                 height /= 2     ; interlaced: just skip every odd scanline later
                             if camg & $0080 and have_cmap
