@@ -21,7 +21,7 @@ koala_module {
         cx16.r14 = load_location + 2 + 8000     ; colors_data_location
         cx16.r15 = cx16.r14 + 1000              ; bg_colors_data_location
         cx16.r13L = @(load_location + 2 + 8000 + 1000 + 1000) & 15     ; background_color
-        uword bitmap_ptr = load_location+2
+        uword @zp bitmap_ptr = load_location+2
 
         gfx2.clear_screen(0)
         uword offsety = (gfx2.height - 200) / 2
@@ -31,10 +31,10 @@ koala_module {
             uword posy = cy + offsety
             ubyte @zp cx
             for cx in 0 to 39 {
-                uword posx = cx as uword * 8
+                cx16.r5 = cx as uword * 8   ; xpos
                 ubyte @zp d
                 for d in 0 to 7 {
-                    gfx2.position(posx, posy + d)
+                    gfx2.position(cx16.r5, posy + d)
                     plot_4x2_pixels()
                 }
                 cx16.r14 ++

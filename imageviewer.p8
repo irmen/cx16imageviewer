@@ -3,6 +3,7 @@
 %import diskio
 %import string
 %import koala_module
+%import doodle_module
 %import iff_module
 %import pcx_module
 %import bmp_module
@@ -78,7 +79,7 @@ main {
     }
 
     sub recognised_extension(str extension) -> bool {
-        str[] extensions = [".koa", ".iff", ".lbm", ".pcx", ".bmp"]
+        str[] extensions = [".koa", ".iff", ".lbm", ".pcx", ".bmp", ".dd", ".ddl"]
         uword ext
         for ext in extensions {
             if string.compare(extension, ext)==0
@@ -108,7 +109,7 @@ main {
     sub attempt_load(uword filenameptr) -> bool {
         fileloader.load_error_details = 0
         uword extension = filenameptr + rfind(filenameptr, '.')
-        if string.compare(extension, ".iff")==0 or string.compare(extension, ".lbm")==0 {
+        if ".iff"==extension or ".lbm"==extension {
             if iff_module.show_image(filenameptr) {
                 if iff_module.num_cycles {
                     repeat 500 {
@@ -123,7 +124,7 @@ main {
                 load_error(fileloader.load_error_details, filenameptr)
             }
         }
-        else if string.compare(extension, ".pcx")==0 {
+        else if ".pcx"==extension {
             if pcx_module.show_image(filenameptr) {
                 sys.wait(180)
                 return true
@@ -131,7 +132,7 @@ main {
                 load_error(fileloader.load_error_details, filenameptr)
             }
         }
-        else if string.compare(extension,".koa")==0 {
+        else if ".koa"==extension {
             if koala_module.show_image(filenameptr) {
                 sys.wait(180)
                 return true
@@ -139,7 +140,15 @@ main {
                 load_error(fileloader.load_error_details, filenameptr)
             }
         }
-        else if string.compare(extension, ".bmp")==0  {
+        else if ".dd"==extension or ".ddl"==extension {
+            if doodle_module.show_image(filenameptr) {
+                sys.wait(180)
+                return true
+            } else {
+                load_error(fileloader.load_error_details, filenameptr)
+            }
+        }
+        else if ".bmp"==extension {
             if bmp_module.show_image(filenameptr) {
                 sys.wait(180)
                 return true
@@ -147,7 +156,7 @@ main {
                 load_error(fileloader.load_error_details, filenameptr)
             }
         }
-;        else if string.compare(extension, ".rle")==0  {   ; or maybe .rlx
+;        else if ".rle"==extension  {   ; or maybe .rlx
 ;            if rle_module.show_image(filenameptr) {
 ;                sys.wait(180)
 ;                return true

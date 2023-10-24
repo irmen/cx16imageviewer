@@ -1,12 +1,13 @@
 # cx16imageviewer
+
 Multi file format image viewer for Commander X16.
 
 Supports:
 
-- C64 Koala files
-- IFF ILBM and PBM files, including CRNG and CCRT color cycling! (famously produced with DeluxePaint)
-- BMP files
-- PCX files
+- C64 Koala (.koa) and Doodle (.dd/.ddl)
+- IFF ILBM and PBM, including CRNG and CCRT color cycling!
+- BMP
+- PCX
 
 of 2 to 256 colors. Display resolution is fixed 320x240.
 
