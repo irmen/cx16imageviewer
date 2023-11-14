@@ -11,7 +11,7 @@ pcx_module {
             ubyte[128] header
             uword size = fileloader.nextbytes(header, 128)
             if size==128 {
-                if header[0] == $0a and header[2] == 1 {
+                if header[0] == $0a and header[2] <= 1 {
                     ubyte bits_per_pixel = header[3]
                     if bits_per_pixel in [1,4,8] {
                         uword width = mkword(header[$09], header[$08]) - mkword(header[$05], header[$04]) + 1
@@ -28,10 +28,20 @@ pcx_module {
                                     palette.set_rgb8(&header + $10, 16)
                                 else if num_colors == 2
                                     palette.set_monochrome($000, $fff)
-                                when bits_per_pixel {
-                                    8 -> load_ok = pcxbitmap.do8bpp(width, height)
-                                    4 -> load_ok = pcxbitmap.do4bpp(width, height)
-                                    1 -> load_ok = pcxbitmap.do1bpp(width, height)
+                                if header[2]==0 {
+                                    ; uncompressed
+                                    when bits_per_pixel {
+                                        8 -> load_ok = pcxbitmap.do8bpp(width, height)
+                                        4 -> load_ok = pcxbitmap.do4bpp(width, height)
+                                        1 -> load_ok = pcxbitmap.do1bpp(width, height)
+                                    }
+                                } else {
+                                    ; RLE-compressed
+                                    when bits_per_pixel {
+                                        8 -> load_ok = pcxbitmap.do8bpp_rle(width, height)
+                                        4 -> load_ok = pcxbitmap.do4bpp_rle(width, height)
+                                        1 -> load_ok = pcxbitmap.do1bpp_rle(width, height)
+                                    }
                                 }
                                 if load_ok {
                                     ubyte haspalette = fileloader.nextbyte()
@@ -91,7 +101,7 @@ pcxbitmap {
         return py < gfx2.height
     }
 
-    sub do1bpp(uword width, uword height) -> ubyte {
+    sub do1bpp_rle(uword width, uword height) -> ubyte {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height {
@@ -114,7 +124,7 @@ pcxbitmap {
         return true
     }
 
-    sub do4bpp(uword width, uword height) -> ubyte {
+    sub do4bpp_rle(uword width, uword height) -> ubyte {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height {
@@ -142,7 +152,7 @@ pcxbitmap {
         return true
     }
 
-    sub do8bpp(uword width, uword height) -> ubyte {
+    sub do8bpp_rle(uword width, uword height) -> ubyte {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height {
@@ -160,6 +170,45 @@ pcxbitmap {
             if px==width
                 if not next_scanline()
                     return true
+        }
+
+        return true
+    }
+
+    sub do1bpp(uword width, uword height) -> ubyte {
+        start_plot(width, height)
+        gfx2.position(offsetx, offsety)
+        repeat height {
+            repeat width/8 {
+                cx16.r0L = fileloader.nextbyte()
+                gfx2.set_8_pixels_from_bits(cx16.r0L, 1, 0)
+            }
+        }
+
+        return true
+    }
+
+    sub do4bpp(uword width, uword height) -> ubyte {
+        start_plot(width, height)
+        gfx2.position(offsetx, offsety)
+        repeat height {
+            repeat width/4 {
+                cx16.r4L = fileloader.nextbyte()
+                gfx2.next_pixel(cx16.r4L >> 4)
+                gfx2.next_pixel(cx16.r4L & 15)
+            }
+        }
+
+        return true
+    }
+
+    sub do8bpp(uword width, uword height) -> ubyte {
+        start_plot(width, height)
+        gfx2.position(offsetx, offsety)
+        repeat height {
+            repeat width {
+                gfx2.next_pixel(fileloader.nextbyte())
+            }
         }
 
         return true
