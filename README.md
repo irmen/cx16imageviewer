@@ -8,6 +8,7 @@ Supports:
 - IFF ILBM and PBM, including CRNG and CCRT color cycling!
 - BMP
 - PCX
+- BMX (Commander X16 bitmap file)
 
 of 2 to 256 colors. Display resolution is fixed 320x240.
 
@@ -19,4 +20,5 @@ Simply type ``p8compile imageviewer.p8 -target cx16`` or just ``make``.
 
 ## Todo
 
+- Fileloader: don't load everything in hiram first, just stream it from disk (using MACPTR if available)
 - IFF: implement Blend Shifting see http://www.effectgames.com/demos/canvascycle/palette.js

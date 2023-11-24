@@ -4,8 +4,8 @@
 
 
 pcx_module {
-    sub show_image(uword filenameptr) -> ubyte {
-        ubyte load_ok = false
+    sub show_image(uword filenameptr) -> bool {
+        bool load_ok = false
 
         if fileloader.load(filenameptr, 0) {
             ubyte[128] header

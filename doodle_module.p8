@@ -3,7 +3,7 @@
 %import palette
 
 doodle_module {
-    sub show_image(uword filenameptr) -> ubyte {
+    sub show_image(uword filenameptr) -> bool {
         if fileloader.load(filenameptr, koala_module.load_location) - koala_module.load_location == 9218 {
             ; set a better C64 color palette, the X16's default is too saturated
             palette.set_c64pepto()

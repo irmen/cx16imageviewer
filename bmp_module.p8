@@ -2,8 +2,8 @@
 %import fileloader
 
 bmp_module {
-    sub show_image(uword filenameptr) -> ubyte {
-        ubyte load_ok = false
+    sub show_image(uword filenameptr) -> bool {
+        bool load_ok = false
         ubyte[$36] header
         uword size
         uword @zp width

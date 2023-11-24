@@ -12,8 +12,8 @@ iff_module {
     ubyte[24] cycle_highs
     ubyte num_cycles
 
-    sub show_image(uword filenameptr) -> ubyte {
-        ubyte load_ok = false
+    sub show_image(uword filenameptr) -> bool {
+        bool load_ok = false
         uword size
         ubyte[32] buffer
         uword camg = 0
@@ -27,9 +27,9 @@ iff_module {
         uword height
         ubyte num_planes
         ubyte compression
-        ubyte have_cmap = false
-        ubyte cycle_crng = false
-        ubyte cycle_ccrt = false
+        bool have_cmap = false
+        bool cycle_crng = false
+        bool cycle_ccrt = false
         num_cycles = 0
         cmap = memory("palette", 256*4, 0)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
 

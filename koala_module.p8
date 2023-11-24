@@ -6,7 +6,7 @@ koala_module {
     ; c64 koala files are about 10Kb each and fit easily in a contiguous main memory block.
     uword load_location = memory("koala_file_buffer", 8000+1000+1000+1+2, 0)
 
-    sub show_image(uword filenameptr) -> ubyte {
+    sub show_image(uword filenameptr) -> bool {
         if fileloader.load(filenameptr, load_location) - load_location == 10003 {
             ; set a better C64 color palette, the X16's default is too saturated
             palette.set_c64pepto()
