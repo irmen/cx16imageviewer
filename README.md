@@ -20,5 +20,4 @@ Simply type ``p8compile imageviewer.p8 -target cx16`` or just ``make``.
 
 ## Todo
 
-- Fileloader: don't load everything in hiram first, just stream it from disk (using MACPTR if available)
 - IFF: implement Blend Shifting see http://www.effectgames.com/demos/canvascycle/palette.js

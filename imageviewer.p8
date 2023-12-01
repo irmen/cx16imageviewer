@@ -8,12 +8,12 @@
 %import iff_module
 %import pcx_module
 %import bmp_module
-;; %import rlex_module
-%import fileloader
 %zeropage basicsafe
 %option no_sysinit
 
 main {
+    uword load_error_details
+
     sub start() {
 
         cx16.rombank(0)        ; switch to kernal rom (for faster file i/o)
@@ -108,7 +108,7 @@ main {
     }
 
     sub attempt_load(uword filenameptr) -> bool {
-        fileloader.load_error_details = 0
+        main.load_error_details = 0
         uword extension = filenameptr + rfind(filenameptr, '.')
         if ".iff"==extension or ".lbm"==extension {
             if iff_module.show_image(filenameptr) {
@@ -122,7 +122,7 @@ main {
                     sys.wait(180)
                 return true
             } else {
-                load_error(fileloader.load_error_details, filenameptr)
+                load_error(main.load_error_details, filenameptr)
             }
         }
         else if ".pcx"==extension {
@@ -130,7 +130,7 @@ main {
                 sys.wait(180)
                 return true
             } else {
-                load_error(fileloader.load_error_details, filenameptr)
+                load_error(main.load_error_details, filenameptr)
             }
         }
         else if ".koa"==extension {
@@ -138,7 +138,7 @@ main {
                 sys.wait(180)
                 return true
             } else {
-                load_error(fileloader.load_error_details, filenameptr)
+                load_error(main.load_error_details, filenameptr)
             }
         }
         else if ".dd"==extension or ".ddl"==extension {
@@ -146,7 +146,7 @@ main {
                 sys.wait(180)
                 return true
             } else {
-                load_error(fileloader.load_error_details, filenameptr)
+                load_error(main.load_error_details, filenameptr)
             }
         }
         else if ".bmp"==extension {
@@ -154,7 +154,7 @@ main {
                 sys.wait(180)
                 return true
             } else {
-                load_error(fileloader.load_error_details, filenameptr)
+                load_error(main.load_error_details, filenameptr)
             }
         }
         else if ".bmx"==extension {
@@ -196,7 +196,7 @@ main {
 ;                sys.wait(180)
 ;                return true
 ;            } else {
-;                load_error(fileloader.load_error_details, filenameptr)
+;                load_error(main.load_error_details, filenameptr)
 ;            }
 ;        }
         return false

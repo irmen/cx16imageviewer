@@ -1,14 +1,13 @@
 %import gfx2
-%import fileloader
+%import diskio
 %import palette
 
 doodle_module {
     sub show_image(uword filenameptr) -> bool {
-        if fileloader.load(filenameptr, koala_module.load_location) - koala_module.load_location == 9218 {
+        if diskio.load_raw(filenameptr, koala_module.load_location) - koala_module.load_location == 9218 {
             ; set a better C64 color palette, the X16's default is too saturated
             palette.set_c64pepto()
             convert_doodlepic()
-            fileloader.close()
             return true
         }
         return false

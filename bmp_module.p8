@@ -1,5 +1,5 @@
 %import gfx2
-%import fileloader
+%import diskio
 
 bmp_module {
     sub show_image(uword filenameptr) -> bool {
@@ -14,11 +14,12 @@ bmp_module {
         uword palette = memory("palette", 256*4, 0)
         uword total_read = 0
 
-        if fileloader.load(filenameptr, 0) {
-            size = fileloader.nextbytes(&header, $36)
+        if diskio.f_open(filenameptr) {
+            size = diskio.f_read(&header, $36)
             if size==$36 {
                 total_read = $36
                 if header[0]=='b' and header[1]=='m' {
+                    diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
                     uword bm_data_offset = mkword(header[11], header[10])
                     uword header_size = mkword(header[$f], header[$e])
                     width = mkword(header[$13], header[$12])
@@ -29,28 +30,28 @@ bmp_module {
                         num_colors = $0001<<bpp
                     uword skip_hdr = header_size - 40
                     repeat skip_hdr
-                        void fileloader.nextbyte()
+                        void cbm.CHRIN()
                     total_read += skip_hdr
-                    size = fileloader.nextbytes(palette, num_colors*4)
+                    size = diskio.f_read(palette, num_colors*4)
                     if size==num_colors*4 {
                         total_read += size
                         repeat bm_data_offset - total_read
-                            void fileloader.nextbyte()
+                            void cbm.CHRIN()
                         gfx2.clear_screen(0)
                         custompalette.set_bgra(palette, num_colors)
                         decode_bitmap()
                         load_ok = true
                     }
                     else
-                        fileloader.load_error_details = "invalid palette size"
+                        main.load_error_details = "invalid palette size"
                 }
                 else
-                    fileloader.load_error_details = "not bmp"
+                    main.load_error_details = "not bmp"
             }
             else
-                fileloader.load_error_details = "no header"
+                main.load_error_details = "no header"
 
-            fileloader.close()
+            diskio.f_close()
         }
 
         return load_ok
@@ -73,24 +74,35 @@ bmp_module {
             uword bits_width = width * bpp
             ubyte pad_bytes = (((bits_width + 31) >> 5) << 2) - ((bits_width + 7) >> 3) as ubyte
 
+            uword scanline_buf = memory("scanline", 320, 0)
+            uword num_pixels
+
             uword y
             for y in height-1 downto 0 {
                 gfx2.position(offsetx, offsety+y)
                 when bpp {
                     8 -> {
-                        repeat width
-                            gfx2.next_pixel(fileloader.nextbyte())
+                        void diskio.f_read(scanline_buf, width)
+                        gfx2.next_pixels(scanline_buf, width)
                     }
                     4 -> {
-                        repeat (width+1)/2 {
-                            cx16.r5L = fileloader.nextbyte()
+                        num_pixels = (width+1)/2
+                        void diskio.f_read(scanline_buf, num_pixels)
+                        cx16.r6 = scanline_buf
+                        repeat num_pixels {
+                            cx16.r5L = @(cx16.r6)
+                            cx16.r6++
                             gfx2.next_pixel(cx16.r5L>>4)
                             gfx2.next_pixel(cx16.r5L&15)
                         }
                     }
                     2 -> {
-                        repeat (width+3)/4 {
-                            cx16.r5L = fileloader.nextbyte()
+                        num_pixels = (width+3)/4
+                        void diskio.f_read(scanline_buf, num_pixels)
+                        cx16.r6 = scanline_buf
+                        repeat num_pixels {
+                            cx16.r5L = @(cx16.r6)
+                            cx16.r6++
                             gfx2.next_pixel(cx16.r5L>>6)
                             gfx2.next_pixel(cx16.r5L>>4 & 3)
                             gfx2.next_pixel(cx16.r5L>>2 & 3)
@@ -98,13 +110,18 @@ bmp_module {
                         }
                     }
                     1 -> {
-                        repeat (width+7)/8
-                            gfx2.set_8_pixels_from_bits(fileloader.nextbyte(), 1, 0)
+                        num_pixels = (width+7)/8
+                        void diskio.f_read(scanline_buf, num_pixels)
+                        cx16.r6 = scanline_buf
+                        repeat num_pixels {
+                            gfx2.set_8_pixels_from_bits(@(cx16.r6), 1, 0)
+                            cx16.r6++
+                        }
                     }
                 }
 
                 repeat pad_bytes
-                    void fileloader.nextbyte()
+                    void cbm.CHRIN()
             }
         }
     }

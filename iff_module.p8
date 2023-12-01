@@ -1,6 +1,7 @@
 %import gfx2
 %import palette
-%import fileloader
+%import diskio
+
 
 iff_module {
     uword cmap
@@ -33,9 +34,10 @@ iff_module {
         num_cycles = 0
         cmap = memory("palette", 256*4, 0)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
 
-        if fileloader.load(filenameptr, 0) {
-            size = fileloader.nextbytes(buffer, 12)
+        if diskio.f_open(filenameptr) {
+            size = diskio.f_read(buffer, 12)
             if size==12 {
+                diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
                 if buffer[0]=='f' and buffer[1]=='o' and buffer[2]=='r' and buffer[3]=='m' {
                     if buffer[9]=='l' and buffer[10]=='b' and buffer[11]=='m'
                         format = buffer[8]
@@ -43,13 +45,13 @@ iff_module {
                         format = buffer[8]
 
                     if not format {
-                        fileloader.load_error_details = "not ilbm or pbm"
+                        main.load_error_details = "not ilbm or pbm"
                         return false
                     }
 
                     while read_chunk_header() {
                         if chunk_id == "bmhd" {
-                            void fileloader.nextbytes(buffer, chunk_size_lo)
+                            void diskio.f_read(buffer, chunk_size_lo)
                             read_aligned()
                             width = mkword(buffer[0], buffer[1])
                             height = mkword(buffer[2], buffer[3])
@@ -58,24 +60,24 @@ iff_module {
                             compression = buffer[10]
                         }
                         else if chunk_id == "camg" {
-                            void fileloader.nextbytes(buffer, chunk_size_lo)
+                            void diskio.f_read(buffer, chunk_size_lo)
                             read_aligned()
                             camg = mkword(buffer[2], buffer[3])
                             if camg & $0800 {
-                                fileloader.load_error_details = "ham mode not supported"
+                                main.load_error_details = "ham mode not supported"
                                 break
                             }
                         }
                         else if chunk_id == "cmap" {
                             have_cmap = true
-                            void fileloader.nextbytes(cmap, chunk_size_lo)
+                            void diskio.f_read(cmap, chunk_size_lo)
                             read_aligned()
                         }
                         else if chunk_id == "crng" {
                             ; DeluxePaint color cycle range
                             if not cycle_ccrt {
                                 cycle_crng = true
-                                void fileloader.nextbytes(buffer, chunk_size_lo)
+                                void diskio.f_read(buffer, chunk_size_lo)
                                 read_aligned()
                                 ubyte flags = buffer[5]
                                 if not flags
@@ -97,7 +99,7 @@ iff_module {
                             ; Graphicraft color cycle range
                             if not cycle_crng {
                                 cycle_ccrt = true
-                                void fileloader.nextbytes(buffer, chunk_size_lo)
+                                void diskio.f_read(buffer, chunk_size_lo)
                                 read_aligned()
                                 ubyte direction = buffer[1]
                                 if direction {
@@ -145,18 +147,18 @@ iff_module {
                         }
                     }
                 } else
-                    fileloader.load_error_details = "not iff ilbm"
+                    main.load_error_details = "not iff ilbm"
             }
             else
-                fileloader.load_error_details = "no header"
+                main.load_error_details = "no header"
 
-            fileloader.close()
+            diskio.f_close()
         }
 
         return load_ok
 
         sub read_chunk_header() -> ubyte {
-            size = fileloader.nextbytes(buffer, 8)
+            size = diskio.f_read(buffer, 8)
             if size==8 {
                 chunk_id[0] = buffer[0]
                 chunk_id[1] = buffer[1]
@@ -177,11 +179,11 @@ iff_module {
 
             repeat lsb(chunk_size_hi) {
                 repeat 256 {
-                    void fileloader.nextbytes(scanline_data_ptr, 256)
+                    void diskio.f_read(scanline_data_ptr, 256)
                 }
             }
             repeat chunk_size_lo
-                void fileloader.nextbyte()
+                void cbm.CHRIN()
             read_aligned()
         }
 
@@ -193,7 +195,7 @@ iff_module {
             ;  so that the next one will fall on an even boundary."
             ; Check that we read such a padding byte if it occurs
             if chunk_size_lo & 1
-                void fileloader.nextbyte()
+                void cbm.CHRIN()
         }
 
         sub make_ehb_palette() {
@@ -230,9 +232,9 @@ iff_module {
             start_plot()
             ubyte interlaced = (camg & $0004) != 0
             for y in 0 to height-1 {
-                void fileloader.nextbytes(scanline_data_ptr, interleave_stride)
+                void diskio.f_read(scanline_data_ptr, interleave_stride)
                 if interlaced
-                    void fileloader.nextbytes(scanline_data_ptr, interleave_stride)
+                    void diskio.f_read(scanline_data_ptr, interleave_stride)
                 gfx2.position(offsetx, offsety+y)
                 planar_to_chunky_scanline()
             }
@@ -253,19 +255,23 @@ iff_module {
         sub decode_rle_scanline() {
             uword @zp x = interleave_stride
             uword plane_ptr = scanline_data_ptr
+            uword scanline_buf = memory("scanline", 320, 0)
 
             while x {
-                cx16.r4L = fileloader.nextbyte()
+                cx16.r4L = cbm.CHRIN()
                 if cx16.r4L > 128 {
-                    cx16.r5L = fileloader.nextbyte()
+                    cx16.r5L = cbm.CHRIN()
                     repeat 2+(cx16.r4L^255) {
                         @(plane_ptr) = cx16.r5L
                         plane_ptr++
                         x--
                     }
                 } else if cx16.r4L < 128 {
+                    void diskio.f_read(scanline_buf, cx16.r4L+1)
+                    cx16.r6 = scanline_buf
                     repeat cx16.r4L+1 {
-                        @(plane_ptr) = fileloader.nextbyte()
+                        @(plane_ptr) = @(cx16.r6)
+                        cx16.r6++
                         plane_ptr++
                         x--
                     }
@@ -334,23 +340,25 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
             }
         }
 
+
         sub decode_pbm_byterun1() {
+            uword scanline_buf = memory("scanline", 320, 0)
             start_plot()
             gfx2.position(0, 0)
             repeat height {
                 cx16.r5 = width
                 while cx16.r5 {
-                    cx16.r3L = fileloader.nextbyte()
+                    cx16.r3L = cbm.CHRIN()
                     if cx16.r3L > 128 {
-                        cx16.r3H = fileloader.nextbyte()
+                        cx16.r3H = cbm.CHRIN()
                         cx16.r6 = 257-cx16.r3L
                         repeat cx16.r6
                             gfx2.next_pixel(cx16.r3H)
                         cx16.r5 -= cx16.r6
                     } else if cx16.r3L < 128 {
                         cx16.r3L++
-                        repeat cx16.r3L
-                            gfx2.next_pixel(fileloader.nextbyte())
+                        void diskio.f_read(scanline_buf, cx16.r3L)
+                        gfx2.next_pixels(scanline_buf, cx16.r3L)
                         cx16.r5 -= cx16.r3L
                     }
                 }
@@ -358,12 +366,12 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
         }
 
         sub decode_pbm_raw() {
+            uword scanline_buf = memory("scanline", 320, 0)
             start_plot()
             gfx2.position(0, 0)
             repeat height {
-                repeat width {
-                    gfx2.next_pixel(fileloader.nextbyte())
-                }
+                void diskio.f_read(scanline_buf, width)
+                gfx2.next_pixels(scanline_buf, width)
             }
         }
     }

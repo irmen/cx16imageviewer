@@ -1,5 +1,4 @@
 %import gfx2
-%import fileloader
 %import palette
 
 
@@ -7,10 +6,11 @@ pcx_module {
     sub show_image(uword filenameptr) -> bool {
         bool load_ok = false
 
-        if fileloader.load(filenameptr, 0) {
+        if diskio.f_open(filenameptr) {
             ubyte[128] header
-            uword size = fileloader.nextbytes(header, 128)
+            uword size = diskio.f_read(header, 128)
             if size==128 {
+                diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
                 if header[0] == $0a and header[2] <= 1 {
                     ubyte bits_per_pixel = header[3]
                     if bits_per_pixel in [1,4,8] {
@@ -44,33 +44,33 @@ pcx_module {
                                     }
                                 }
                                 if load_ok {
-                                    ubyte haspalette = fileloader.nextbyte()
+                                    ubyte haspalette = cbm.CHRIN()
                                     if haspalette == 12 {
                                         ; there is 256 colors of palette data at the end
                                         uword palette_mem = memory("palette", 256*4, 0)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
                                         load_ok = false
-                                        size = fileloader.nextbytes(palette_mem, 3*256)
+                                        size = diskio.f_read(palette_mem, 3*256)
                                         if size==3*256 {
                                             load_ok = true
                                             palette.set_rgb8(palette_mem, num_colors)
                                         } else
-                                            fileloader.load_error_details = "invalid palette size"
+                                            main.load_error_details = "invalid palette size"
                                     } else
-                                        fileloader.load_error_details = "no palette data"
+                                        main.load_error_details = "no palette data"
                                 } else
-                                    fileloader.load_error_details = "bitmap decode error"
+                                    main.load_error_details = "bitmap decode error"
                             } else
-                                fileloader.load_error_details = "width not multiple of 8"
+                                main.load_error_details = "width not multiple of 8"
                         } else
-                            fileloader.load_error_details = ">256 colors"
+                            main.load_error_details = ">256 colors"
                     } else
-                        fileloader.load_error_details = "invalid bpp"
+                        main.load_error_details = "invalid bpp"
                 } else
-                    fileloader.load_error_details = "no pcx"
+                    main.load_error_details = "no pcx"
             } else
-                fileloader.load_error_details = "no header"
+                main.load_error_details = "no header"
 
-            fileloader.close()
+            diskio.f_close()
         }
 
         return load_ok
@@ -105,10 +105,10 @@ pcxbitmap {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height {
-            cx16.r4 = fileloader.nextbyte()
+            cx16.r4 = cbm.CHRIN()
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
-                cx16.r5L = fileloader.nextbyte()
+                cx16.r5L = cbm.CHRIN()
                 repeat cx16.r4L
                     gfx2.set_8_pixels_from_bits(cx16.r5L, 1, 0)
                 px += cx16.r4 * 8
@@ -128,10 +128,10 @@ pcxbitmap {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height {
-            cx16.r4L = fileloader.nextbyte()
+            cx16.r4L = cbm.CHRIN()
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
-                cx16.r5L = fileloader.nextbyte()
+                cx16.r5L = cbm.CHRIN()
                 cx16.r5H = cx16.r5L & 15
                 cx16.r5L >>= 4
                 repeat cx16.r4L {
@@ -156,10 +156,10 @@ pcxbitmap {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height {
-            cx16.r4L = fileloader.nextbyte()
+            cx16.r4L = cbm.CHRIN()
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
-                cx16.r5L = fileloader.nextbyte()
+                cx16.r5L = cbm.CHRIN()
                 repeat cx16.r4L
                     gfx2.next_pixel(cx16.r5L)
                 px += cx16.r4L
@@ -180,7 +180,7 @@ pcxbitmap {
         gfx2.position(offsetx, offsety)
         repeat height {
             repeat width/8 {
-                cx16.r0L = fileloader.nextbyte()
+                cx16.r0L = cbm.CHRIN()
                 gfx2.set_8_pixels_from_bits(cx16.r0L, 1, 0)
             }
         }
@@ -193,7 +193,7 @@ pcxbitmap {
         gfx2.position(offsetx, offsety)
         repeat height {
             repeat width/4 {
-                cx16.r4L = fileloader.nextbyte()
+                cx16.r4L = cbm.CHRIN()
                 gfx2.next_pixel(cx16.r4L >> 4)
                 gfx2.next_pixel(cx16.r4L & 15)
             }
@@ -203,12 +203,12 @@ pcxbitmap {
     }
 
     sub do8bpp(uword width, uword height) -> ubyte {
+        uword scanline_buf = memory("scanline", 320, 0)
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         repeat height {
-            repeat width {
-                gfx2.next_pixel(fileloader.nextbyte())
-            }
+            void diskio.f_read(scanline_buf, width)
+            gfx2.next_pixels(scanline_buf, width)
         }
 
         return true
