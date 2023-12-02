@@ -12,6 +12,7 @@ bmp_module {
         uword offsetx
         uword offsety
         uword palette = memory("palette", 256*4, 0)
+        uword scanline_buf = memory("scanline", 320, 0)
         uword total_read = 0
 
         if diskio.f_open(filenameptr) {
@@ -73,8 +74,6 @@ bmp_module {
             start_plot()
             uword bits_width = width * bpp
             ubyte pad_bytes = (((bits_width + 31) >> 5) << 2) - ((bits_width + 7) >> 3) as ubyte
-
-            uword scanline_buf = memory("scanline", 320, 0)
             uword num_pixels
 
             uword y

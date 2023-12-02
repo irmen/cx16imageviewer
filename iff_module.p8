@@ -23,6 +23,7 @@ iff_module {
         uword chunk_size_hi
         uword chunk_size_lo
         uword scanline_data_ptr = sys.progend()
+        uword scanline_buf = memory("scanline", 320, 0)
 
         uword width
         uword height
@@ -255,7 +256,6 @@ iff_module {
         sub decode_rle_scanline() {
             uword @zp x = interleave_stride
             uword plane_ptr = scanline_data_ptr
-            uword scanline_buf = memory("scanline", 320, 0)
 
             while x {
                 cx16.r4L = cbm.CHRIN()
@@ -342,7 +342,6 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
 
 
         sub decode_pbm_byterun1() {
-            uword scanline_buf = memory("scanline", 320, 0)
             start_plot()
             gfx2.position(0, 0)
             repeat height {
@@ -366,7 +365,6 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
         }
 
         sub decode_pbm_raw() {
-            uword scanline_buf = memory("scanline", 320, 0)
             start_plot()
             gfx2.position(0, 0)
             repeat height {

@@ -83,6 +83,7 @@ pcxbitmap {
     uword offsety
     uword @zp py
     uword @zp px
+    uword scanline_buf = memory("scanline", 320, 0)
 
     sub start_plot(uword width, uword height) {
         offsetx = 0
@@ -203,7 +204,6 @@ pcxbitmap {
     }
 
     sub do8bpp(uword width, uword height) -> ubyte {
-        uword scanline_buf = memory("scanline", 320, 0)
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         repeat height {
