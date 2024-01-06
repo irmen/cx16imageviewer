@@ -13,9 +13,10 @@
 
 main {
     uword load_error_details
+    ubyte system_screen_mode
 
     sub start() {
-
+        system_screen_mode = cx16.screen_mode(0, true)
         cx16.rombank(0)        ; switch to kernal rom (for faster file i/o)
 
         ; trick to check if we're running on sdcard or host system shared folder
@@ -30,7 +31,7 @@ main {
         if list_image_files_on_disk() {
             txt.print("\nenter file name or just enter to view all: ")
             ubyte i = txt.input_chars(diskio.list_filename)
-            if i {
+            if i!=0 {
                 gfx2.screen_mode(1)
                 if not attempt_load(diskio.list_filename)
                     load_error("invalid file", diskio.list_filename)
@@ -97,9 +98,9 @@ main {
         uword filenames = memory("filenames", 20*200, 0)
         uword @zp names_ptr = filenames
         ubyte num_files = diskio.list_filenames(0, filenames, sizeof(filenames))
-        if num_files {
+        if num_files!=0 {
             gfx2.screen_mode(1)    ; 320*240, 256c
-            while @(names_ptr) {
+            while @(names_ptr)!=0 {
                 void attempt_load(names_ptr)
                 names_ptr += string.length(names_ptr) + 1
             }
@@ -112,7 +113,7 @@ main {
         uword extension = filenameptr + rfind(filenameptr, '.')
         if ".iff"==extension or ".lbm"==extension {
             if iff_module.show_image(filenameptr) {
-                if iff_module.num_cycles {
+                if iff_module.num_cycles!=0 {
                     repeat 500 {
                         sys.wait(1)
                         iff_module.cycle_colors_each_jiffy()
@@ -206,8 +207,9 @@ main {
         ; back to default text mode and palette
         gfx2.screen_mode(0)
         cbm.CINT()
+        void cx16.screen_mode(system_screen_mode, false)
         txt.print("load error: ")
-        if what
+        if what!=0
             txt.print(what)
         txt.print("\nfile: ")
         txt.print(filenameptr)

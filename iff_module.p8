@@ -8,7 +8,7 @@ iff_module {
     uword num_colors
     uword[24] cycle_rates
     uword[24] cycle_rate_ticks
-    ubyte[24] cycle_reverseflags
+    bool[24] cycle_reverseflags
     ubyte[24] cycle_lows
     ubyte[24] cycle_highs
     ubyte num_cycles
@@ -45,7 +45,7 @@ iff_module {
                     else if buffer[9]=='b' and buffer[10]=='m' and buffer[11]==' '
                         format = buffer[8]
 
-                    if not format {
+                    if format==0 {
                         main.load_error_details = "not ilbm or pbm"
                         return false
                     }
@@ -64,7 +64,7 @@ iff_module {
                             void diskio.f_read(buffer, chunk_size_lo)
                             read_aligned()
                             camg = mkword(buffer[2], buffer[3])
-                            if camg & $0800 {
+                            if camg & $0800 !=0 {
                                 main.load_error_details = "ham mode not supported"
                                 break
                             }
@@ -81,12 +81,12 @@ iff_module {
                                 void diskio.f_read(buffer, chunk_size_lo)
                                 read_aligned()
                                 ubyte flags = buffer[5]
-                                if not flags
+                                if flags==0
                                     flags = buffer[4]   ; DOS deluxepaint writes them sometimes in the other byte?
                                 ; bit 0 should be "active" flag but many images don't have this set even though the range is active.
                                 ; so we check the cycling speed instead to see if it is >0.
                                 cycle_rates[num_cycles] = mkword(buffer[2], buffer[3])
-                                if cycle_rates[num_cycles] {
+                                if cycle_rates[num_cycles] !=0 {
                                     cycle_rate_ticks[num_cycles] = 1
                                     cycle_lows[num_cycles] = buffer[6]
                                     cycle_highs[num_cycles] = buffer[7]
@@ -103,7 +103,7 @@ iff_module {
                                 void diskio.f_read(buffer, chunk_size_lo)
                                 read_aligned()
                                 ubyte direction = buffer[1]
-                                if direction {
+                                if direction !=0 {
                                     ; delay_sec = buffer[4] * 256 * 256 * 256 + buffer[5] * 256 * 256 + buffer[6] * 256 + buffer[7]
                                     ; delay_micro = buffer[8] * 256 * 256 * 256 + buffer[9] * 256 * 256 + buffer[10] * 256 + buffer[11]
                                     ; We're ignoring the delay_sec field for now. Not many images will have this slow of a color cycle anyway (>1 sec per cycle)
@@ -121,13 +121,13 @@ iff_module {
                         }
                         else if chunk_id == "body" {
                             gfx2.clear_screen(0)
-                            if camg & $0004
+                            if camg & $0004 !=0
                                 height /= 2     ; interlaced: just skip every odd scanline later
-                            if camg & $0080 and have_cmap
+                            if camg & $0080 !=0 and have_cmap
                                 make_ehb_palette()
                             if format=='i' {
                                 palette.set_rgb8(cmap, num_colors)
-                                if compression
+                                if compression!=0
                                     decode_rle()
                                 else
                                     decode_raw()
@@ -135,7 +135,7 @@ iff_module {
                             }
                             else if format=='p' {
                                 palette.set_rgb8(cmap, num_colors)
-                                if compression
+                                if compression!=0
                                     decode_pbm_byterun1()
                                 else
                                     decode_pbm_raw()
@@ -158,7 +158,7 @@ iff_module {
 
         return load_ok
 
-        sub read_chunk_header() -> ubyte {
+        sub read_chunk_header() -> bool {
             size = diskio.f_read(buffer, 8)
             if size==8 {
                 chunk_id[0] = buffer[0]
@@ -195,7 +195,7 @@ iff_module {
             ; "This means that every odd-length "chunk" (see below) must be padded
             ;  so that the next one will fall on an even boundary."
             ; Check that we read such a padding byte if it occurs
-            if chunk_size_lo & 1
+            if chunk_size_lo & 1 !=0
                 void cbm.CHRIN()
         }
 
@@ -231,7 +231,7 @@ iff_module {
 
         sub decode_raw() {
             start_plot()
-            ubyte interlaced = (camg & $0004) != 0
+            bool interlaced = (camg & $0004) != 0
             for y in 0 to height-1 {
                 void diskio.f_read(scanline_data_ptr, interleave_stride)
                 if interlaced
@@ -243,7 +243,7 @@ iff_module {
 
         sub decode_rle() {
             start_plot()
-            ubyte interlaced = (camg & $0004) != 0
+            bool interlaced = (camg & $0004) != 0
             for y in 0 to height-1 {
                 decode_rle_scanline()
                 if interlaced
@@ -257,7 +257,7 @@ iff_module {
             uword @zp x = interleave_stride
             uword plane_ptr = scanline_data_ptr
 
-            while x {
+            while x!=0 {
                 cx16.r4L = cbm.CHRIN()
                 if cx16.r4L > 128 {
                     cx16.r5L = cbm.CHRIN()
@@ -290,17 +290,17 @@ iff_module {
                 %asm {{
                     bra  +
 _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
-+                   lda  p8_pixptr
++                   lda  p8v_pixptr
                     sta  P8ZP_SCRATCH_W1
-                    lda  p8_pixptr+1
+                    lda  p8v_pixptr+1
                     sta  P8ZP_SCRATCH_W1+1
-                    lda  p8_x
+                    lda  p8v_x
                     and  #7
                     tay
                     lda  _masks,y
                     sta  P8ZP_SCRATCH_B1        ; mask
                     phx
-                    ldx  p8_num_planes
+                    ldx  p8v_num_planes
 -                   lda  (P8ZP_SCRATCH_W1)
                     clc
                     and  P8ZP_SCRATCH_B1
@@ -309,7 +309,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
 +                   ror  cx16.r5L                   ; shift planar bit into chunky byte
                     lda  P8ZP_SCRATCH_W1
                     ; clc
-                    adc  p8_bitplane_stride
+                    adc  p8v_bitplane_stride
                     sta  P8ZP_SCRATCH_W1
                     bcc  +
                     inc  P8ZP_SCRATCH_W1+1
@@ -318,7 +318,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
                     plx
                     lda  #8
                     sec
-                    sbc  p8_num_planes
+                    sbc  p8v_num_planes
                     beq  +
 -                   lsr  cx16.r5L
                     dec  a
@@ -346,7 +346,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
             gfx2.position(0, 0)
             repeat height {
                 cx16.r5 = width
-                while cx16.r5 {
+                while cx16.r5!=0 {
                     cx16.r3L = cbm.CHRIN()
                     if cx16.r3L > 128 {
                         cx16.r3H = cbm.CHRIN()
@@ -380,7 +380,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
 
         ; TODO implement Blend Shifting see http://www.effectgames.com/demos/canvascycle/palette.js
 
-        ubyte changed = false
+        bool changed = false
         ubyte ci
         for ci in 0 to num_cycles-1 {
             cycle_rate_ticks[ci]--
@@ -394,7 +394,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
         if changed
             palette.set_rgb8(cmap, num_colors)     ; set the new palette
 
-        sub do_cycle(uword low, uword high, ubyte reversed) {
+        sub do_cycle(uword low, uword high, bool reversed) {
             low *= 3
             high *= 3
             uword bytecount = high-low

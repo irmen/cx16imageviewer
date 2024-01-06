@@ -102,7 +102,7 @@ pcxbitmap {
         return py < gfx2.height
     }
 
-    sub do1bpp_rle(uword width, uword height) -> ubyte {
+    sub do1bpp_rle(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height {
@@ -125,7 +125,7 @@ pcxbitmap {
         return true
     }
 
-    sub do4bpp_rle(uword width, uword height) -> ubyte {
+    sub do4bpp_rle(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height {
@@ -153,7 +153,7 @@ pcxbitmap {
         return true
     }
 
-    sub do8bpp_rle(uword width, uword height) -> ubyte {
+    sub do8bpp_rle(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         while py < height {
@@ -176,7 +176,7 @@ pcxbitmap {
         return true
     }
 
-    sub do1bpp(uword width, uword height) -> ubyte {
+    sub do1bpp(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         repeat height {
@@ -189,7 +189,7 @@ pcxbitmap {
         return true
     }
 
-    sub do4bpp(uword width, uword height) -> ubyte {
+    sub do4bpp(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         repeat height {
@@ -203,7 +203,7 @@ pcxbitmap {
         return true
     }
 
-    sub do8bpp(uword width, uword height) -> ubyte {
+    sub do8bpp(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx2.position(offsetx, offsety)
         repeat height {
