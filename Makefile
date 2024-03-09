@@ -5,7 +5,7 @@ all:  imageviewer.prg
 clean:
 	rm -f *.prg *.vice-*
 
-imageviewer.prg: imageviewer.p8 bmp_module.p8 iff_module.p8 koala_module.p8 pcx_module.p8 doodle_module.p8
+imageviewer.prg: src/imageviewer.p8 src/loader.p8 src/bmp_module.p8 src/iff_module.p8 src/koala_module.p8 src/pcx_module.p8 src/doodle_module.p8
 	p8compile $< -target cx16
 
 emu: all

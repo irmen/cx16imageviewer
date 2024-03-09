@@ -54,21 +54,21 @@ pcx_module {
                                             load_ok = true
                                             palette.set_rgb8(palette_mem, num_colors)
                                         } else
-                                            main.load_error_details = "invalid palette size"
+                                            loader.error_details = "invalid palette size"
                                     } else
-                                        main.load_error_details = "no palette data"
+                                        loader.error_details = "no palette data"
                                 } else
-                                    main.load_error_details = "bitmap decode error"
+                                    loader.error_details = "bitmap decode error"
                             } else
-                                main.load_error_details = "width not multiple of 8"
+                                loader.error_details = "width not multiple of 8"
                         } else
-                            main.load_error_details = ">256 colors"
+                            loader.error_details = ">256 colors"
                     } else
-                        main.load_error_details = "invalid bpp"
+                        loader.error_details = "invalid bpp"
                 } else
-                    main.load_error_details = "no pcx"
+                    loader.error_details = "no pcx"
             } else
-                main.load_error_details = "no header"
+                loader.error_details = "no header"
 
             diskio.f_close()
         }

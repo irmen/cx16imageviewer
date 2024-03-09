@@ -44,13 +44,13 @@ bmp_module {
                         load_ok = true
                     }
                     else
-                        main.load_error_details = "invalid palette size"
+                        loader.error_details = "invalid palette size"
                 }
                 else
-                    main.load_error_details = "not bmp"
+                    loader.error_details = "not bmp"
             }
             else
-                main.load_error_details = "no header"
+                loader.error_details = "no header"
 
             diskio.f_close()
         }

@@ -46,7 +46,7 @@ iff_module {
                         format = buffer[8]
 
                     if format==0 {
-                        main.load_error_details = "not ilbm or pbm"
+                        loader.error_details = "not ilbm or pbm"
                         return false
                     }
 
@@ -65,7 +65,7 @@ iff_module {
                             read_aligned()
                             camg = mkword(buffer[2], buffer[3])
                             if camg & $0800 !=0 {
-                                main.load_error_details = "ham mode not supported"
+                                loader.error_details = "ham mode not supported"
                                 break
                             }
                         }
@@ -148,10 +148,10 @@ iff_module {
                         }
                     }
                 } else
-                    main.load_error_details = "not iff ilbm"
+                    loader.error_details = "not iff ilbm"
             }
             else
-                main.load_error_details = "no header"
+                loader.error_details = "no header"
 
             diskio.f_close()
         }

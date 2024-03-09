@@ -15,7 +15,7 @@ of 2 to 256 colors. Display resolution is fixed 320x240.
 ## Compiling
 
 The program is written in Prog8. Requires recent prog8 compiler and 64tass assembler to compile.
-Simply type ``p8compile imageviewer.p8 -target cx16`` or just ``make``.
+Simply type ``p8compile src/imageviewer.p8 -target cx16`` or just ``make``.
 
 
 ## Todo
