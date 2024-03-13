@@ -3,6 +3,7 @@
 %import palette
 
 koala_module {
+    ; c64 koala file structure: 8000 bytes bitmap data, 1000 bytes color data, 1000 bytes bg color data, 1 byte screen background color.
     ; c64 koala files are about 10Kb each and fit easily in a contiguous main memory block.
     const uword KOALA_FILESIZE = 8000+1000+1000+1+2
     uword load_location = memory("koala_file_buffer", KOALA_FILESIZE, 0)
@@ -52,6 +53,7 @@ koala_module {
             cx16.r0L <<= 2
             pixel()
             bitmap_ptr++
+            return
 
             asmsub pixel() {
                 %asm {{
@@ -77,6 +79,7 @@ _col1               lda  (cx16.r14)        ; colors_data_location
 _col2               lda  (cx16.r14)         ; colors_data_location
                     and  #15
 +                   ; now plot two pixels because C64 multicolor mode is double wide pixels
+                    ; we could also have used 2x horizontal scaling mode in the VERA, but I didn't want to mess with the screen mode too much. And its only a single STA.
                     sta  cx16.VERA_DATA0
                     sta  cx16.VERA_DATA0
                     rts

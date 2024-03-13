@@ -41,16 +41,37 @@ doodle_module {
         }
 
         sub plot_8_pixels() {
-            cx16.r0L = @(bitmap_ptr)
-            cx16.r1L = @(color_ptr) & 15
-            cx16.r2L = @(color_ptr) >> 4
-            repeat 8 {
-                rol(cx16.r0L)
-                if_cc
-                    cx16.VERA_DATA0 = cx16.r1L  ; background
-                else
-                    cx16.VERA_DATA0 = cx16.r2L  ; foreground
-            }
+;            cx16.r0L = @(bitmap_ptr)
+;            cx16.r1L = @(color_ptr) & 15
+;            cx16.r2L = @(color_ptr) >> 4
+;            repeat 8 {
+;                rol(cx16.r0L)
+;                if_cc
+;                    cx16.VERA_DATA0 = cx16.r1L  ; background
+;                else
+;                    cx16.VERA_DATA0 = cx16.r2L  ; foreground
+;            }
+            %asm {{
+                lda  (p8v_bitmap_ptr)
+                sta  P8ZP_SCRATCH_B1
+                lda  (p8v_color_ptr)
+                and  #15
+                tax
+                lda  (p8v_color_ptr)
+                lsr  a
+                lsr  a
+                lsr  a
+                lsr  a
+                ldy  #8
+_loop           rol  P8ZP_SCRATCH_B1
+                bcs  +
+                stx  cx16.VERA_DATA0
+                bcc  ++
++               sta  cx16.VERA_DATA0
++               dey
+                bne  _loop
+                rts
+            }}
         }
     }
 }
