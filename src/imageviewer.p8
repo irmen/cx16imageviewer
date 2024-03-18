@@ -95,4 +95,19 @@ main {
             txt.print("no files in directory!\n")
     }
 
+    sub load_error(uword what, uword filenameptr) {
+        ; back to default text mode and palette
+        gfx2.screen_mode(0)
+        cbm.CINT()
+        void cx16.screen_mode(0, false)
+        txt.print("load error: ")
+        if what!=0
+            txt.print(what)
+        txt.print("\nfile: ")
+        txt.print(filenameptr)
+        txt.nl()
+        cx16.rombank(4)        ; switch back to basic rom
+        sys.exit(1)
+    }
+
 }

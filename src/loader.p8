@@ -36,31 +36,31 @@ loader {
                 }
                 return true
             } else
-                load_error(loader.error_details, filenameptr)
+                main.load_error(loader.error_details, filenameptr)
         }
         else if ".pcx"==extension {
             if pcx_module.show_image(filenameptr)
                 return true
             else
-                load_error(loader.error_details, filenameptr)
+                main.load_error(loader.error_details, filenameptr)
         }
         else if ".koa"==extension {
             if koala_module.show_image(filenameptr)
                 return true
             else
-                load_error(loader.error_details, filenameptr)
+                main.load_error(loader.error_details, filenameptr)
         }
         else if ".dd"==extension or ".ddl"==extension {
             if doodle_module.show_image(filenameptr)
                 return true
             else
-                load_error(loader.error_details, filenameptr)
+                main.load_error(loader.error_details, filenameptr)
         }
         else if ".bmp"==extension {
             if bmp_module.show_image(filenameptr)
                 return true
             else
-                load_error(loader.error_details, filenameptr)
+                main.load_error(loader.error_details, filenameptr)
         }
         else if ".bmx"==extension {
             if bmx.open(diskio.drivenumber, filenameptr) {
@@ -76,7 +76,7 @@ loader {
                             }
                             return true
                         } else
-                            load_error(bmx.error_message, filenameptr)
+                            main.load_error(bmx.error_message, filenameptr)
                     } else {
                         ; clear the screen with the border color
                         gfx2.clear_screen(bmx.border)
@@ -86,12 +86,12 @@ loader {
                         if bmx.continue_load_stamp(0, offset, gfx2.width)
                             return true
                         else
-                            load_error(bmx.error_message, filenameptr)
+                            main.load_error(bmx.error_message, filenameptr)
                     }
                 } else
-                    load_error("image too large", filenameptr)
+                    main.load_error("image too large", filenameptr)
             } else
-                load_error(bmx.error_message, filenameptr)
+                main.load_error(bmx.error_message, filenameptr)
             return false
         }
 ;        else if ".rle"==extension  {   ; or maybe .rlx
@@ -99,26 +99,11 @@ loader {
 ;                sys.wait(180)
 ;                return true
 ;            } else {
-;                load_error(loader.error_details, filenameptr)
+;                main.load_error(loader.error_details, filenameptr)
 ;            }
 ;        }
-        load_error("unrecognised file extension", filenameptr)
+        main.load_error("unrecognised file extension", filenameptr)
         return false
-    }
-
-    sub load_error(uword what, uword filenameptr) {
-        ; back to default text mode and palette
-        gfx2.screen_mode(0)
-        cbm.CINT()
-        void cx16.screen_mode(0, false)
-        txt.print("load error: ")
-        if what!=0
-            txt.print(what)
-        txt.print("\nfile: ")
-        txt.print(filenameptr)
-        txt.nl()
-        cx16.rombank(4)        ; switch back to basic rom
-        sys.exit(1)
     }
 
     sub rfind(uword stringptr, ubyte char) -> ubyte {
