@@ -9,6 +9,16 @@
 %import bmp_module
 
 loader {
+
+    sub recognised_extension(str extension) -> bool {
+        str[] extensions = [".koa", ".iff", ".lbm", ".pcx", ".bmp", ".bmx", ".dd", ".ddl"]
+        for cx16.r4 in extensions {
+            if string.compare(extension, cx16.r4)==0
+                return true
+        }
+        return false
+    }
+
     uword error_details
 
     sub attempt_load(uword filenameptr) -> bool {

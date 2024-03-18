@@ -20,5 +20,4 @@ Simply type ``p8compile src/imageviewer.p8 -target cx16`` or just ``make``.
 
 ## Todo
 
-- Make koala module stream the file instead of requiring 10Kb buffer. Or store it in 2 Hiram banks.
 - IFF: implement Blend Shifting see http://www.effectgames.com/demos/canvascycle/palette.js

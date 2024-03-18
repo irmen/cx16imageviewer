@@ -34,11 +34,11 @@ doodle_module {
         ubyte cy
         for cy in 0 to 24*8 step 8 {
             uword posy = cy + offsety
-            ubyte cx
             ; read and decode next "scanline" (1 character in height=8 pixels)
             uword @zp bitmap_ptr = scanline_buf
             if diskio.f_read(bitmap_ptr, 320)!=320
                 return false
+            ubyte @zp cx
             for cx in 0 to 39 {
                 cx16.r5 = cx as uword * 8   ; xpos
                 ubyte @zp d

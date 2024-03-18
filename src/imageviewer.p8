@@ -14,7 +14,7 @@ main {
         ; trick to check if we're running on sdcard or host system shared folder
         txt.print("\x93\nimage viewer for commander x16\nformats supported: ")
         uword ext
-        for ext in main.recognised_extension.extensions {
+        for ext in loader.recognised_extension.extensions {
             txt.print(ext)
             txt.spc()
         }
@@ -35,7 +35,7 @@ main {
             txt.print("files are read with sequential file loading.\nin the emulator this currently only works with files on an sd-card image.\nsorry :(\n")
 
         gfx2.screen_mode(0)      ; back to default text mode
-        palette.set_c64pepto()
+        palette.set_default16()
         txt.print("that was all folks!\n")
 
         cx16.rombank(4)        ; switch back to basic rom
@@ -46,7 +46,7 @@ main {
             txt.print(" blocks   filename\n-------- -------------\n")
             while diskio.lf_next_entry() {
                 uword extension = &diskio.list_filename + loader.rfind(&diskio.list_filename, '.')
-                if recognised_extension(extension) {
+                if loader.recognised_extension(extension) {
                     txt.spc()
                     print_uw_right(diskio.list_blocks)
                     txt.print("    ")
@@ -72,15 +72,6 @@ main {
         txt.print_uw(value)
     }
 
-    sub recognised_extension(str extension) -> bool {
-        str[] extensions = [".koa", ".iff", ".lbm", ".pcx", ".bmp", ".bmx", ".dd", ".ddl"]
-        for cx16.r4 in extensions {
-            if string.compare(extension, cx16.r4)==0
-                return true
-        }
-        return false
-    }
-
     sub show_pics_sdcard() {
 
         ; load and show the images on the disk with the given extensions.
@@ -92,7 +83,7 @@ main {
             gfx2.screen_mode(1)    ; 320*240, 256c
             while @(names_ptr)!=0 and not cbm.STOP2() {
                 uword extension = names_ptr + loader.rfind(names_ptr, '.')
-                if recognised_extension(extension) {
+                if loader.recognised_extension(extension) {
                     if loader.attempt_load(names_ptr)
                         sys.wait(180)
                     else
