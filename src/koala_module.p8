@@ -10,7 +10,7 @@ koala_module {
     uword scanline_buf = memory("scanline", 320, 0)     ; reuse
     ubyte screen_color
 
-    sub show_image(uword filenameptr) -> bool {
+    sub show_image(uword filenameptr, bool set_gfx_screenmode) -> bool {
         if diskio.f_open(filenameptr) {
             diskio.f_seek(0, 8002)      ; initially skip the header and bitmap data
             if diskio.f_read(color_data, 1000)==1000 {
@@ -18,6 +18,10 @@ koala_module {
                     if diskio.f_read(&screen_color, 1)==1 {
                         screen_color &= 15
                         diskio.f_seek(0, 2)      ; seek back to the bitmap data
+                        if set_gfx_screenmode
+                            gfx2.screen_mode(1)    ; 320*240, 256c
+                        else
+                            gfx2.clear_screen(0)
                         palette.set_c64pepto()   ; set a better C64 color palette, the X16's default is too saturated
                         bool success = convert_koalapic()
                         diskio.f_close()
@@ -33,8 +37,6 @@ koala_module {
     sub convert_koalapic() -> bool {
         cx16.r14 = color_data
         cx16.r15 = bg_color_data
-
-        gfx2.clear_screen(0)
         uword offsety = (gfx2.height - 200) / 2
         ubyte cy
         for cy in 0 to 24*8 step 8 {

@@ -14,7 +14,7 @@ main {
         ; trick to check if we're running on sdcard or host system shared folder
         txt.print("\x93\nimage viewer for commander x16\nformats supported: ")
         uword ext
-        for ext in loader.recognised_extension.extensions {
+        for ext in loader.known_extensions {
             txt.print(ext)
             txt.spc()
         }
@@ -24,8 +24,7 @@ main {
             txt.print("\nenter file name or just enter to view all: ")
             ubyte i = txt.input_chars(diskio.list_filename)
             if i!=0 {
-                gfx2.screen_mode(1)
-                if loader.attempt_load(diskio.list_filename)
+                if loader.attempt_load(diskio.list_filename, true)
                     sys.wait(180)
             }
             else
@@ -34,7 +33,7 @@ main {
         else
             txt.print("files are read with sequential file loading.\nin the emulator this currently only works with files on an sd-card image.\nsorry :(\n")
 
-        gfx2.screen_mode(0)      ; back to default text mode
+        loader.restore_screen_mode()
         palette.set_default16()
         txt.print("that was all folks!\n")
 
@@ -46,7 +45,7 @@ main {
             txt.print(" blocks   filename\n-------- -------------\n")
             while diskio.lf_next_entry() {
                 uword extension = &diskio.list_filename + loader.rfind(&diskio.list_filename, '.')
-                if loader.recognised_extension(extension) {
+                if loader.is_known_extension(extension) {
                     txt.spc()
                     print_uw_right(diskio.list_blocks)
                     txt.print("    ")
@@ -83,8 +82,8 @@ main {
             gfx2.screen_mode(1)    ; 320*240, 256c
             while @(names_ptr)!=0 and not cbm.STOP2() {
                 uword extension = names_ptr + loader.rfind(names_ptr, '.')
-                if loader.recognised_extension(extension) {
-                    if loader.attempt_load(names_ptr)
+                if loader.is_known_extension(extension) {
+                    if loader.attempt_load(names_ptr, false)
                         sys.wait(180)
                     else
                         break
@@ -97,7 +96,7 @@ main {
 
     sub load_error(uword what, uword filenameptr) {
         ; back to default text mode and palette
-        gfx2.screen_mode(0)
+        loader.restore_screen_mode()
         cbm.CINT()
         void cx16.screen_mode(0, false)
         txt.print("load error: ")

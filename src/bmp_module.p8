@@ -2,7 +2,7 @@
 %import diskio
 
 bmp_module {
-    sub show_image(uword filenameptr) -> bool {
+    sub show_image(uword filenameptr, bool set_gfx_screenmode) -> bool {
         bool load_ok = false
         ubyte[$36] header
         uword size
@@ -38,7 +38,10 @@ bmp_module {
                         total_read += size
                         repeat bm_data_offset - total_read
                             void cbm.CHRIN()
-                        gfx2.clear_screen(0)
+                        if set_gfx_screenmode
+                            gfx2.screen_mode(1)    ; 320*240, 256c
+                        else
+                            gfx2.clear_screen(0)
                         custompalette.set_bgra(palette, num_colors)
                         decode_bitmap()
                         load_ok = true

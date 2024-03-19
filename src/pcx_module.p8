@@ -3,7 +3,7 @@
 
 
 pcx_module {
-    sub show_image(uword filenameptr) -> bool {
+    sub show_image(uword filenameptr, bool set_gfx_screenmode) -> bool {
         bool load_ok = false
 
         if diskio.f_open(filenameptr) {
@@ -21,7 +21,10 @@ pcx_module {
                         uword num_colors = $0001<<bits_per_pixel
                         if number_of_planes == 1 {
                             if (width & 7) == 0 {
-                                gfx2.clear_screen(0)
+                                if set_gfx_screenmode
+                                    gfx2.screen_mode(1)    ; 320*240, 256c
+                                else
+                                    gfx2.clear_screen(0)
                                 if palette_format==2
                                     custompalette.set_grayscale256()
                                 else if num_colors == 16

@@ -10,9 +10,10 @@
 
 loader {
 
-    sub recognised_extension(str extension) -> bool {
-        str[] extensions = [".koa", ".iff", ".lbm", ".pcx", ".bmp", ".bmx", ".dd", ".ddl"]
-        for cx16.r4 in extensions {
+    str[] known_extensions = [".koa", ".iff", ".lbm", ".pcx", ".bmp", ".bmx", ".dd", ".ddl"]
+
+    sub is_known_extension(str extension) -> bool {
+        for cx16.r4 in known_extensions {
             if string.compare(extension, cx16.r4)==0
                 return true
         }
@@ -21,11 +22,11 @@ loader {
 
     uword error_details
 
-    sub attempt_load(uword filenameptr) -> bool {
+    sub attempt_load(uword filenameptr, bool set_gfx_screenmode) -> bool {
         loader.error_details = 0
         uword extension = filenameptr + rfind(filenameptr, '.')
         if ".iff"==extension or ".lbm"==extension {
-            if iff_module.show_image(filenameptr) {
+            if iff_module.show_image(filenameptr, set_gfx_screenmode) {
                 if iff_module.num_cycles!=0 {
                     repeat 500 {
                         sys.waitvsync()
@@ -39,31 +40,33 @@ loader {
                 main.load_error(loader.error_details, filenameptr)
         }
         else if ".pcx"==extension {
-            if pcx_module.show_image(filenameptr)
+            if pcx_module.show_image(filenameptr, set_gfx_screenmode)
                 return true
             else
                 main.load_error(loader.error_details, filenameptr)
         }
         else if ".koa"==extension {
-            if koala_module.show_image(filenameptr)
+            if koala_module.show_image(filenameptr, set_gfx_screenmode)
                 return true
             else
                 main.load_error(loader.error_details, filenameptr)
         }
         else if ".dd"==extension or ".ddl"==extension {
-            if doodle_module.show_image(filenameptr)
+            if doodle_module.show_image(filenameptr, set_gfx_screenmode)
                 return true
             else
                 main.load_error(loader.error_details, filenameptr)
         }
         else if ".bmp"==extension {
-            if bmp_module.show_image(filenameptr)
+            if bmp_module.show_image(filenameptr, set_gfx_screenmode)
                 return true
             else
                 main.load_error(loader.error_details, filenameptr)
         }
         else if ".bmx"==extension {
             if bmx.open(diskio.drivenumber, filenameptr) {
+                if set_gfx_screenmode
+                    gfx2.screen_mode(1)
                 if bmx.width<=gfx2.width {
                     ; set the color depth for the bitmap:
                     cx16.VERA_L1_CONFIG = cx16.VERA_L1_CONFIG & %11111100 | bmx.vera_colordepth
@@ -95,7 +98,7 @@ loader {
             return false
         }
 ;        else if ".rle"==extension  {   ; or maybe .rlx
-;            if rle_module.show_image(filenameptr) {
+;            if rle_module.show_image(filenameptr, set_gfx_screenmode) {
 ;                sys.wait(180)
 ;                return true
 ;            } else {
@@ -104,6 +107,10 @@ loader {
 ;        }
         main.load_error("unrecognised file extension", filenameptr)
         return false
+    }
+
+    sub restore_screen_mode() {
+        gfx2.screen_mode(0)
     }
 
     sub rfind(uword stringptr, ubyte char) -> ubyte {

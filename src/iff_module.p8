@@ -13,7 +13,7 @@ iff_module {
     ubyte[24] cycle_highs
     ubyte num_cycles
 
-    sub show_image(uword filenameptr) -> bool {
+    sub show_image(uword filenameptr, bool set_gfx_screenmode) -> bool {
         bool load_ok = false
         uword size
         ubyte[32] buffer
@@ -120,7 +120,10 @@ iff_module {
                                 skip_chunk()
                         }
                         else if chunk_id == "body" {
-                            gfx2.clear_screen(0)
+                            if set_gfx_screenmode
+                                gfx2.screen_mode(1)    ; 320*240, 256c
+                            else
+                                gfx2.clear_screen(0)
                             if camg & $0004 !=0
                                 height /= 2     ; interlaced: just skip every odd scanline later
                             if camg & $0080 !=0 and have_cmap
