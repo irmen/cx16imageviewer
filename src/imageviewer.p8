@@ -28,7 +28,7 @@ main {
                 uword extension = &diskio.list_filename + loader.rfind(&diskio.list_filename, '.')
                 if loader.is_known_extension(extension) {
                     if loader.attempt_load(diskio.list_filename, true)
-                        txt.waitkey()
+                        void txt.waitkey()
                 } else load_error("unknown file extension", diskio.list_filename)
             }
             else
@@ -88,7 +88,7 @@ main {
                 uword extension = names_ptr + loader.rfind(names_ptr, '.')
                 if loader.is_known_extension(extension) {
                     if loader.attempt_load(names_ptr, false)
-                        txt.waitkey()
+                        void txt.waitkey()
                     else
                         break
                 }

@@ -25,7 +25,7 @@ loader {
 
     sub attempt_load(uword filenameptr, bool set_gfx_screenmode) -> bool {
         if set_gfx_screenmode {
-            cx16.get_screen_mode()
+            void cx16.get_screen_mode()
             %asm {{
                 sta  p8v_orig_screenmode
             }}
