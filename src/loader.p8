@@ -117,8 +117,10 @@ loader {
     }
 
     sub restore_screen_mode() {
-        if orig_screenmode!=255
-            gfx2.screen_mode(orig_screenmode)
+        gfx2.screen_mode(0)
+        if orig_screenmode!=255 {
+            void cx16.screen_mode(orig_screenmode, false)
+        }
     }
 
     sub rfind(uword stringptr, ubyte char) -> ubyte {
