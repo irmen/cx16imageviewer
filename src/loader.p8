@@ -21,8 +21,16 @@ loader {
     }
 
     uword error_details
+    ubyte @shared orig_screenmode = 255
 
     sub attempt_load(uword filenameptr, bool set_gfx_screenmode) -> bool {
+        if set_gfx_screenmode {
+            cx16.get_screen_mode()
+            %asm {{
+                sta  p8v_orig_screenmode
+            }}
+        }
+
         loader.error_details = 0
         uword extension = filenameptr + rfind(filenameptr, '.')
         if ".iff"==extension or ".lbm"==extension {
@@ -105,12 +113,12 @@ loader {
 ;                main.load_error(loader.error_details, filenameptr)
 ;            }
 ;        }
-        main.load_error("unrecognised file extension", filenameptr)
         return false
     }
 
     sub restore_screen_mode() {
-        gfx2.screen_mode(0)
+        if orig_screenmode!=255
+            gfx2.screen_mode(orig_screenmode)
     }
 
     sub rfind(uword stringptr, ubyte char) -> ubyte {

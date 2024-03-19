@@ -21,11 +21,15 @@ main {
         txt.nl()
         txt.nl()
         if list_image_files_on_disk() {
+            txt.print("\nwhen image is displayed, press a key to go to next image,\n and stop/ctrl+c to halt!\n")
             txt.print("\nenter file name or just enter to view all: ")
             ubyte i = txt.input_chars(diskio.list_filename)
             if i!=0 {
-                if loader.attempt_load(diskio.list_filename, true)
-                    sys.wait(180)
+                uword extension = &diskio.list_filename + loader.rfind(&diskio.list_filename, '.')
+                if loader.is_known_extension(extension) {
+                    if loader.attempt_load(diskio.list_filename, true)
+                        txt.waitkey()
+                } else load_error("unknown file extension", diskio.list_filename)
             }
             else
                 show_pics_sdcard()
@@ -84,7 +88,7 @@ main {
                 uword extension = names_ptr + loader.rfind(names_ptr, '.')
                 if loader.is_known_extension(extension) {
                     if loader.attempt_load(names_ptr, false)
-                        sys.wait(180)
+                        txt.waitkey()
                     else
                         break
                 }
