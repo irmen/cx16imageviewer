@@ -13,8 +13,13 @@ loader {
     str[] known_extensions = [".koa", ".iff", ".lbm", ".pcx", ".bmp", ".bmx", ".dd", ".ddl"]
 
     sub is_known_extension(str extension) -> bool {
+        if string.length(extension) > 4     ; max extension length
+            return false
+        str extension_copy = "?" * 4
+        extension_copy = extension
+        void string.lower(extension_copy)
         for cx16.r4 in known_extensions {
-            if string.compare(extension, cx16.r4)==0
+            if string.compare(extension_copy, cx16.r4)==0
                 return true
         }
         return false
@@ -24,6 +29,7 @@ loader {
     ubyte @shared orig_screenmode = 255
 
     sub attempt_load(uword filenameptr, bool set_gfx_screenmode) -> bool {
+        void string.lower(filenameptr)
         if set_gfx_screenmode {
             void cx16.get_screen_mode()
             %asm {{
@@ -39,7 +45,7 @@ loader {
                     repeat 500 {
                         sys.waitvsync()
                         iff_module.cycle_colors_each_jiffy()
-                        if cbm.STOP2() or cx16.joystick_get2(0)!=$ffff
+                        if cbm.STOP2() or cbm.GETIN()!=0
                             break
                     }
                 }
