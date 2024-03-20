@@ -13,9 +13,9 @@ koala_module {
     sub show_image(uword filenameptr, bool set_gfx_screenmode) -> bool {
         if diskio.f_open(filenameptr) {
             diskio.f_seek(0, 8002)      ; initially skip the header and bitmap data
-            if diskio.f_read(color_data, 1000)==1000 {
-                if diskio.f_read(bg_color_data, 1000)==1000 {
-                    if diskio.f_read(&screen_color, 1)==1 {
+            if diskio.f_read(color_data, 1000)==1000 and
+                diskio.f_read(bg_color_data, 1000)==1000 and
+                    diskio.f_read(&screen_color, 1)==1 {
                         screen_color &= 15
                         diskio.f_seek(0, 2)      ; seek back to the bitmap data
                         if set_gfx_screenmode
@@ -27,8 +27,6 @@ koala_module {
                         diskio.f_close()
                         return success
                     }
-                }
-            }
             diskio.f_close()
         }
         return false

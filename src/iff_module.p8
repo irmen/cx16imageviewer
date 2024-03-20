@@ -15,7 +15,6 @@ iff_module {
 
     sub show_image(uword filenameptr, bool set_gfx_screenmode) -> bool {
         bool load_ok = false
-        uword size
         ubyte[32] buffer
         uword camg = 0
         ubyte format            ; 'i' (ILBM) or 'p' (PBM)
@@ -35,135 +34,128 @@ iff_module {
         num_cycles = 0
         cmap = memory("palette", 256*4, 0)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
 
-        if diskio.f_open(filenameptr) {
-            size = diskio.f_read(buffer, 12)
-            if size==12 {
-                diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
-                if buffer[0]=='f' and buffer[1]=='o' and buffer[2]=='r' and buffer[3]=='m' {
-                    if buffer[9]=='l' and buffer[10]=='b' and buffer[11]=='m'
-                        format = buffer[8]
-                    else if buffer[9]=='b' and buffer[10]=='m' and buffer[11]==' '
-                        format = buffer[8]
+        if diskio.f_open(filenameptr) and diskio.f_read(buffer, 12)==12 {
+            diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
+            if buffer[0]=='f' and buffer[1]=='o' and buffer[2]=='r' and buffer[3]=='m' {
+                if buffer[9]=='l' and buffer[10]=='b' and buffer[11]=='m'
+                    format = buffer[8]
+                else if buffer[9]=='b' and buffer[10]=='m' and buffer[11]==' '
+                    format = buffer[8]
 
-                    if format==0 {
-                        loader.error_details = "not ilbm or pbm"
-                        return false
+                if format==0 {
+                    loader.error_details = "not ilbm or pbm"
+                    return false
+                }
+
+                while read_chunk_header() {
+                    if chunk_id == "bmhd" {
+                        void diskio.f_read(buffer, chunk_size_lo)
+                        read_aligned()
+                        width = mkword(buffer[0], buffer[1])
+                        height = mkword(buffer[2], buffer[3])
+                        num_planes = buffer[8]
+                        num_colors = $0001 << num_planes
+                        compression = buffer[10]
                     }
-
-                    while read_chunk_header() {
-                        if chunk_id == "bmhd" {
+                    else if chunk_id == "camg" {
+                        void diskio.f_read(buffer, chunk_size_lo)
+                        read_aligned()
+                        camg = mkword(buffer[2], buffer[3])
+                        if camg & $0800 !=0 {
+                            loader.error_details = "ham mode not supported"
+                            break
+                        }
+                    }
+                    else if chunk_id == "cmap" {
+                        have_cmap = true
+                        void diskio.f_read(cmap, chunk_size_lo)
+                        read_aligned()
+                    }
+                    else if chunk_id == "crng" {
+                        ; DeluxePaint color cycle range
+                        if not cycle_ccrt {
+                            cycle_crng = true
                             void diskio.f_read(buffer, chunk_size_lo)
                             read_aligned()
-                            width = mkword(buffer[0], buffer[1])
-                            height = mkword(buffer[2], buffer[3])
-                            num_planes = buffer[8]
-                            num_colors = $0001 << num_planes
-                            compression = buffer[10]
-                        }
-                        else if chunk_id == "camg" {
-                            void diskio.f_read(buffer, chunk_size_lo)
-                            read_aligned()
-                            camg = mkword(buffer[2], buffer[3])
-                            if camg & $0800 !=0 {
-                                loader.error_details = "ham mode not supported"
-                                break
+                            ubyte flags = buffer[5]
+                            if flags==0
+                                flags = buffer[4]   ; DOS deluxepaint writes them sometimes in the other byte?
+                            ; bit 0 should be "active" flag but many images don't have this set even though the range is active.
+                            ; so we check the cycling speed instead to see if it is >0.
+                            cycle_rates[num_cycles] = mkword(buffer[2], buffer[3])
+                            if cycle_rates[num_cycles] !=0 {
+                                cycle_rate_ticks[num_cycles] = 1
+                                cycle_lows[num_cycles] = buffer[6]
+                                cycle_highs[num_cycles] = buffer[7]
+                                cycle_reverseflags[num_cycles] = flags & 2 != 0
+                                num_cycles++
                             }
-                        }
-                        else if chunk_id == "cmap" {
-                            have_cmap = true
-                            void diskio.f_read(cmap, chunk_size_lo)
-                            read_aligned()
-                        }
-                        else if chunk_id == "crng" {
-                            ; DeluxePaint color cycle range
-                            if not cycle_ccrt {
-                                cycle_crng = true
-                                void diskio.f_read(buffer, chunk_size_lo)
-                                read_aligned()
-                                ubyte flags = buffer[5]
-                                if flags==0
-                                    flags = buffer[4]   ; DOS deluxepaint writes them sometimes in the other byte?
-                                ; bit 0 should be "active" flag but many images don't have this set even though the range is active.
-                                ; so we check the cycling speed instead to see if it is >0.
-                                cycle_rates[num_cycles] = mkword(buffer[2], buffer[3])
-                                if cycle_rates[num_cycles] !=0 {
-                                    cycle_rate_ticks[num_cycles] = 1
-                                    cycle_lows[num_cycles] = buffer[6]
-                                    cycle_highs[num_cycles] = buffer[7]
-                                    cycle_reverseflags[num_cycles] = flags & 2 != 0
-                                    num_cycles++
-                                }
-                            } else
-                                skip_chunk()
-                        }
-                        else if chunk_id == "ccrt" {
-                            ; Graphicraft color cycle range
-                            if not cycle_crng {
-                                cycle_ccrt = true
-                                void diskio.f_read(buffer, chunk_size_lo)
-                                read_aligned()
-                                ubyte direction = buffer[1]
-                                if direction !=0 {
-                                    ; delay_sec = buffer[4] * 256 * 256 * 256 + buffer[5] * 256 * 256 + buffer[6] * 256 + buffer[7]
-                                    ; delay_micro = buffer[8] * 256 * 256 * 256 + buffer[9] * 256 * 256 + buffer[10] * 256 + buffer[11]
-                                    ; We're ignoring the delay_sec field for now. Not many images will have this slow of a color cycle anyway (>1 sec per cycle)
-                                    ; rate = int(16384 // (60*delay_micro/1e6))
-                                    ; float rate = (65*16384.0) / (mkword(buffer[9], buffer[10]) as float)  ; fairly good approximation using float arithmetic
-                                    cycle_rates[num_cycles] = 33280 / (mkword(buffer[9], buffer[10]) >> 5)      ; reasonable approximation using only 16-bit integer arithmetic
-                                    cycle_rate_ticks[num_cycles] = 1
-                                    cycle_lows[num_cycles] = buffer[2]
-                                    cycle_highs[num_cycles] = buffer[3]
-                                    cycle_reverseflags[num_cycles] = direction == 1    ; weird, the spec say that -1 = reversed but several example images that I have downloaded are the opposite
-                                    num_cycles++
-                                }
-                            } else
-                                skip_chunk()
-                        }
-                        else if chunk_id == "body" {
-                            if set_gfx_screenmode
-                                gfx2.screen_mode(1)    ; 320*240, 256c
-                            else
-                                gfx2.clear_screen(0)
-                            if camg & $0004 !=0
-                                height /= 2     ; interlaced: just skip every odd scanline later
-                            if camg & $0080 !=0 and have_cmap
-                                make_ehb_palette()
-                            if format=='i' {
-                                palette.set_rgb8(cmap, num_colors)
-                                if compression!=0
-                                    decode_rle()
-                                else
-                                    decode_raw()
-                                load_ok = true
-                            }
-                            else if format=='p' {
-                                palette.set_rgb8(cmap, num_colors)
-                                if compression!=0
-                                    decode_pbm_byterun1()
-                                else
-                                    decode_pbm_raw()
-                                load_ok = true
-                            }
-                            break   ; done after body
-                        }
-                        else {
+                        } else
                             skip_chunk()
-                        }
                     }
-                } else
-                    loader.error_details = "not iff ilbm"
-            }
-            else
-                loader.error_details = "no header"
+                    else if chunk_id == "ccrt" {
+                        ; Graphicraft color cycle range
+                        if not cycle_crng {
+                            cycle_ccrt = true
+                            void diskio.f_read(buffer, chunk_size_lo)
+                            read_aligned()
+                            ubyte direction = buffer[1]
+                            if direction !=0 {
+                                ; delay_sec = buffer[4] * 256 * 256 * 256 + buffer[5] * 256 * 256 + buffer[6] * 256 + buffer[7]
+                                ; delay_micro = buffer[8] * 256 * 256 * 256 + buffer[9] * 256 * 256 + buffer[10] * 256 + buffer[11]
+                                ; We're ignoring the delay_sec field for now. Not many images will have this slow of a color cycle anyway (>1 sec per cycle)
+                                ; rate = int(16384 // (60*delay_micro/1e6))
+                                ; float rate = (65*16384.0) / (mkword(buffer[9], buffer[10]) as float)  ; fairly good approximation using float arithmetic
+                                cycle_rates[num_cycles] = 33280 / (mkword(buffer[9], buffer[10]) >> 5)      ; reasonable approximation using only 16-bit integer arithmetic
+                                cycle_rate_ticks[num_cycles] = 1
+                                cycle_lows[num_cycles] = buffer[2]
+                                cycle_highs[num_cycles] = buffer[3]
+                                cycle_reverseflags[num_cycles] = direction == 1    ; weird, the spec say that -1 = reversed but several example images that I have downloaded are the opposite
+                                num_cycles++
+                            }
+                        } else
+                            skip_chunk()
+                    }
+                    else if chunk_id == "body" {
+                        if set_gfx_screenmode
+                            gfx2.screen_mode(1)    ; 320*240, 256c
+                        else
+                            gfx2.clear_screen(0)
+                        if camg & $0004 !=0
+                            height /= 2     ; interlaced: just skip every odd scanline later
+                        if camg & $0080 !=0 and have_cmap
+                            make_ehb_palette()
+                        if format=='i' {
+                            palette.set_rgb8(cmap, num_colors)
+                            if compression!=0
+                                decode_rle()
+                            else
+                                decode_raw()
+                            load_ok = true
+                        }
+                        else if format=='p' {
+                            palette.set_rgb8(cmap, num_colors)
+                            if compression!=0
+                                decode_pbm_byterun1()
+                            else
+                                decode_pbm_raw()
+                            load_ok = true
+                        }
+                        break   ; done after body
+                    }
+                    else {
+                        skip_chunk()
+                    }
+                }
+            } else
+                loader.error_details = "not iff ilbm"
 
-            diskio.f_close()
         }
-
+        diskio.f_close()
         return load_ok
 
         sub read_chunk_header() -> bool {
-            size = diskio.f_read(buffer, 8)
-            if size==8 {
+            if diskio.f_read(buffer, 8)==8 {
                 chunk_id[0] = buffer[0]
                 chunk_id[1] = buffer[1]
                 chunk_id[2] = buffer[2]

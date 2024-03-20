@@ -15,49 +15,42 @@ bmp_module {
         uword scanline_buf = memory("scanline", 320, 0)
         uword total_read = 0
 
-        if diskio.f_open(filenameptr) {
-            size = diskio.f_read(&header, $36)
-            if size==$36 {
-                total_read = $36
-                if header[0]=='b' and header[1]=='m' {
-                    diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
-                    uword bm_data_offset = mkword(header[11], header[10])
-                    uword header_size = mkword(header[$f], header[$e])
-                    width = mkword(header[$13], header[$12])
-                    height = mkword(header[$17], header[$16])
-                    bpp = header[$1c]
-                    uword num_colors = header[$2e]
-                    if num_colors == 0
-                        num_colors = $0001<<bpp
-                    uword skip_hdr = header_size - 40
-                    repeat skip_hdr
+        if diskio.f_open(filenameptr) and diskio.f_read(&header, $36)==$36 {
+            total_read = $36
+            if header[0]=='b' and header[1]=='m' {
+                diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
+                uword bm_data_offset = mkword(header[11], header[10])
+                uword header_size = mkword(header[$f], header[$e])
+                width = mkword(header[$13], header[$12])
+                height = mkword(header[$17], header[$16])
+                bpp = header[$1c]
+                uword num_colors = header[$2e]
+                if num_colors == 0
+                    num_colors = $0001<<bpp
+                uword skip_hdr = header_size - 40
+                repeat skip_hdr
+                    void cbm.CHRIN()
+                total_read += skip_hdr
+                size = diskio.f_read(palette, num_colors*4)
+                if size==num_colors*4 {
+                    total_read += size
+                    repeat bm_data_offset - total_read
                         void cbm.CHRIN()
-                    total_read += skip_hdr
-                    size = diskio.f_read(palette, num_colors*4)
-                    if size==num_colors*4 {
-                        total_read += size
-                        repeat bm_data_offset - total_read
-                            void cbm.CHRIN()
-                        if set_gfx_screenmode
-                            gfx2.screen_mode(1)    ; 320*240, 256c
-                        else
-                            gfx2.clear_screen(0)
-                        custompalette.set_bgra(palette, num_colors)
-                        decode_bitmap()
-                        load_ok = true
-                    }
+                    if set_gfx_screenmode
+                        gfx2.screen_mode(1)    ; 320*240, 256c
                     else
-                        loader.error_details = "invalid palette size"
+                        gfx2.clear_screen(0)
+                    custompalette.set_bgra(palette, num_colors)
+                    decode_bitmap()
+                    load_ok = true
                 }
                 else
-                    loader.error_details = "not bmp"
+                    loader.error_details = "invalid palette size"
             }
             else
-                loader.error_details = "no header"
-
-            diskio.f_close()
+                loader.error_details = "not bmp"
         }
-
+        diskio.f_close()
         return load_ok
 
         sub start_plot() {

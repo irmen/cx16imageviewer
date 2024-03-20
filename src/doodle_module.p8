@@ -11,22 +11,20 @@ doodle_module {
         ; then 1000 bytes for the screen ram (=colors)
         ; then 24 bytes padding
         ; then 8000 bytes bitmap data
-        if diskio.f_open(filenameptr) {
-            if diskio.f_read(color_data, 1002)==1002 {
-                if diskio.f_read(scanline_buf, 24)==24 {
-                    ; set a better C64 color palette, the X16's default is too saturated
-                    palette.set_c64pepto()
-                    if set_gfx_screenmode
-                        gfx2.screen_mode(1)    ; 320*240, 256c
-                    else
-                        gfx2.clear_screen(0)
-                    bool success = convert_doodlepic()
-                    diskio.f_close()
-                    return success
-                }
+        if diskio.f_open(filenameptr) and diskio.f_read(color_data, 1002)==1002 {
+            if diskio.f_read(scanline_buf, 24)==24 {
+                ; set a better C64 color palette, the X16's default is too saturated
+                palette.set_c64pepto()
+                if set_gfx_screenmode
+                    gfx2.screen_mode(1)    ; 320*240, 256c
+                else
+                    gfx2.clear_screen(0)
+                bool success = convert_doodlepic()
+                diskio.f_close()
+                return success
             }
-            diskio.f_close()
         }
+        diskio.f_close()
         return false
     }
 
