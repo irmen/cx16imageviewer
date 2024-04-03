@@ -8,6 +8,7 @@
 
 main {
     sub start() {
+        void diskio.fastmode(1)
         void cx16.screen_mode(0, true)
         cx16.rombank(0)        ; switch to kernal rom (for faster file i/o)
 

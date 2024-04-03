@@ -45,7 +45,7 @@ loader {
                     repeat 500 {
                         sys.waitvsync()
                         iff_module.cycle_colors_each_jiffy()
-                        if cbm.STOP2() or cbm.GETIN()!=0
+                        if cbm.STOP2() or cbm.GETIN2()!=0
                             break
                     }
                 }
