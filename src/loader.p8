@@ -1,7 +1,9 @@
 %import gfx2
 %import diskio
+%import textio
 %import string
 %import bmx
+%import palette
 %import koala_module
 %import doodle_module
 %import iff_module
@@ -45,7 +47,7 @@ loader {
                     repeat 500 {
                         sys.waitvsync()
                         iff_module.cycle_colors_each_jiffy()
-                        if cbm.STOP2() or cbm.GETIN2()!=0
+                        if cbm.STOP2()
                             break
                     }
                 }
@@ -136,6 +138,54 @@ loader {
                 return i
         }
         return 0
+    }
+
+    sub save_as_bmx(uword filenameptr) {
+        sub textmode() {
+            restore_screen_mode()
+            palette.set_default16()
+        }
+
+        uword extension = filenameptr + rfind(filenameptr, '.')
+        if ".bmx" == extension {
+            textmode()
+            txt.print(filenameptr)
+            txt.print(": file is already in bmx format")
+            sys.wait(120)
+            return
+        }
+        if extension==filenameptr {
+            void string.append(filenameptr, ".bmx")
+        } else {
+            extension[1] = 'b'
+            extension[2] = 'm'
+            extension[3] = 'x'
+            extension[4] = 0
+        }
+
+        bmx.set_bpp(gfx2.bpp)
+        bmx.width = gfx2.width
+        bmx.height = gfx2.height
+        bmx.border = 0
+        bmx.compression = 0
+        bmx.palette_entries = $0001 << gfx2.bpp
+        bmx.palette_start = 0
+
+        ubyte[50] bmxfilename
+        void string.copy(filenameptr, bmxfilename)
+        bool success = bmx.save(diskio.drivenumber, bmxfilename, 0, 0, gfx2.width)
+        textmode()
+        if success {
+            txt.print("converted to: ")
+            txt.print(bmxfilename)
+            txt.nl()
+        } else {
+            txt.print("failed to save as ")
+            txt.print(bmxfilename)
+            txt.print(": ")
+            txt.print(bmx.error_message)
+        }
+        sys.wait(200)
     }
 }
 

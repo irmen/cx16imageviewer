@@ -23,13 +23,16 @@ main {
         txt.nl()
         if list_image_files_on_disk() {
             txt.print("\nwhen image is displayed, press a key to go to next image,\n and stop/ctrl+c to halt!\n")
+            txt.print("press stop/ctrl+c to stop palette cycling images.\n")
+            txt.print("press 'b' key to save image as a .bmx format file.\n")
+            txt.print("  (this might incur a size/color depth conversion)\n")
             txt.print("\nenter file name or just enter to view all: ")
             ubyte i = txt.input_chars(diskio.list_filename)
             if i!=0 {
                 uword extension = &diskio.list_filename + loader.rfind(&diskio.list_filename, '.')
                 if loader.is_known_extension(extension) {
                     if loader.attempt_load(diskio.list_filename, true)
-                        void txt.waitkey()
+                        handle_key(diskio.list_filename)
                 } else load_error("unknown file extension", diskio.list_filename)
             }
             else
@@ -89,7 +92,7 @@ main {
                 uword extension = names_ptr + loader.rfind(names_ptr, '.')
                 if loader.is_known_extension(extension) {
                     if loader.attempt_load(names_ptr, false)
-                        void txt.waitkey()
+                        handle_key(names_ptr)
                     else
                         break
                 }
@@ -114,4 +117,9 @@ main {
         sys.exit(1)
     }
 
+    sub handle_key(uword filenameptr) {
+        if txt.waitkey()=='b' {
+            loader.save_as_bmx(filenameptr)
+        }
+    }
 }
