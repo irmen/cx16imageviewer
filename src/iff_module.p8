@@ -345,10 +345,10 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
                     cx16.r3L = cbm.CHRIN()
                     if cx16.r3L > 128 {
                         cx16.r3H = cbm.CHRIN()
-                        cx16.r6 = 257-cx16.r3L
-                        repeat cx16.r6
+                        cx16.r6L = 2+(cx16.r3L^255)
+                        repeat cx16.r6L
                             gfx2.next_pixel(cx16.r3H)
-                        cx16.r5 -= cx16.r6
+                        cx16.r5 -= cx16.r6L
                     } else if cx16.r3L < 128 {
                         cx16.r3L++
                         void diskio.f_read(scanline_buf, cx16.r3L)
