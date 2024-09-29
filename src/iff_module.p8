@@ -1,6 +1,7 @@
 %import gfx2
 %import palette
 %import diskio
+%import compression
 
 
 iff_module {
@@ -27,7 +28,7 @@ iff_module {
         uword width
         uword height
         ubyte num_planes
-        ubyte compression
+        ubyte imagecompression
         bool have_cmap = false
         bool cycle_crng = false
         bool cycle_ccrt = false
@@ -55,7 +56,7 @@ iff_module {
                         height = mkword(buffer[2], buffer[3])
                         num_planes = buffer[8]
                         num_colors = $0001 << num_planes
-                        compression = buffer[10]
+                        imagecompression = buffer[10]
                     }
                     else if chunk_id == "camg" {
                         void diskio.f_read(buffer, chunk_size_lo)
@@ -127,7 +128,7 @@ iff_module {
                             make_ehb_palette()
                         if format=='i' {
                             palette.set_rgb8(cmap, num_colors)
-                            if compression!=0
+                            if imagecompression!=0
                                 decode_rle()
                             else
                                 decode_raw()
@@ -135,7 +136,7 @@ iff_module {
                         }
                         else if format=='p' {
                             palette.set_rgb8(cmap, num_colors)
-                            if compression!=0
+                            if imagecompression!=0
                                 decode_pbm_byterun1()
                             else
                                 decode_pbm_raw()
@@ -249,30 +250,31 @@ iff_module {
         }
 
         sub decode_rle_scanline() {
-            uword @zp x = interleave_stride
-            uword plane_ptr = scanline_data_ptr
-
-            while x!=0 {
-                cx16.r4L = cbm.CHRIN()
-                if cx16.r4L > 128 {
-                    cx16.r5L = cbm.CHRIN()
-                    repeat 2+(cx16.r4L^255) {
-                        @(plane_ptr) = cx16.r5L
-                        plane_ptr++
-                        x--
-                    }
-                } else if cx16.r4L < 128 {
-                    void diskio.f_read(scanline_buf, cx16.r4L+1)
-                    cx16.r6 = scanline_buf
-                    repeat cx16.r4L+1 {
-                        @(plane_ptr) = @(cx16.r6)
-                        cx16.r6++
-                        plane_ptr++
-                        x--
-                    }
-                } else
-                    break
-            }
+            void compression.decode_rle_srcfunc(cbm.CHRIN, scanline_data_ptr, interleave_stride)
+;            uword @zp x = interleave_stride
+;            uword plane_ptr = scanline_data_ptr
+;
+;            while x!=0 {
+;                cx16.r4L = cbm.CHRIN()
+;                if cx16.r4L > 128 {
+;                    cx16.r5L = cbm.CHRIN()
+;                    repeat 2+(cx16.r4L^255) {
+;                        @(plane_ptr) = cx16.r5L
+;                        plane_ptr++
+;                        x--
+;                    }
+;                } else if cx16.r4L < 128 {
+;                    void diskio.f_read(scanline_buf, cx16.r4L+1)
+;                    cx16.r6 = scanline_buf
+;                    repeat cx16.r4L+1 {
+;                        @(plane_ptr) = @(cx16.r6)
+;                        cx16.r6++
+;                        plane_ptr++
+;                        x--
+;                    }
+;                } else
+;                    return
+;            }
         }
 
         sub planar_to_chunky_scanline() {
@@ -340,22 +342,24 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
             start_plot()
             gfx2.position(0, 0)
             repeat height {
-                cx16.r5 = width
-                while cx16.r5!=0 {
-                    cx16.r3L = cbm.CHRIN()
-                    if cx16.r3L > 128 {
-                        cx16.r3H = cbm.CHRIN()
-                        cx16.r6L = 2+(cx16.r3L^255)
-                        repeat cx16.r6L
-                            gfx2.next_pixel(cx16.r3H)
-                        cx16.r5 -= cx16.r6L
-                    } else if cx16.r3L < 128 {
-                        cx16.r3L++
-                        void diskio.f_read(scanline_buf, cx16.r3L)
-                        gfx2.next_pixels(scanline_buf, cx16.r3L)
-                        cx16.r5 -= cx16.r3L
-                    }
-                }
+                void compression.decode_rle_srcfunc(cbm.CHRIN, scanline_buf, width)
+                gfx2.next_pixels(scanline_buf, width)
+;                cx16.r5 = width
+;                while cx16.r5!=0 {
+;                    cx16.r3L = cbm.CHRIN()
+;                    if cx16.r3L > 128 {
+;                        cx16.r3H = cbm.CHRIN()
+;                        cx16.r6L = 2+(cx16.r3L^255)
+;                        repeat cx16.r6L
+;                            gfx2.next_pixel(cx16.r3H)
+;                        cx16.r5 -= cx16.r6L
+;                    } else if cx16.r3L < 128 {
+;                        cx16.r3L++
+;                        void diskio.f_read(scanline_buf, cx16.r3L)
+;                        gfx2.next_pixels(scanline_buf, cx16.r3L)
+;                        cx16.r5 -= cx16.r3L
+;                    } else return
+;                }
             }
         }
 
