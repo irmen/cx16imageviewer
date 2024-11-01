@@ -1,4 +1,4 @@
-%import gfx2
+%import gfx_lores
 %import diskio
 %import palette
 
@@ -19,9 +19,9 @@ koala_module {
                         screen_color &= 15
                         diskio.f_seek(0, 2)      ; seek back to the bitmap data
                         if set_gfx_screenmode
-                            gfx2.screen_mode(1)    ; 320*240, 256c
+                            gfx_lores.graphics_mode()    ; 320*240, 256c
                         else
-                            gfx2.clear_screen(0)
+                            gfx_lores.clear_screen(0)
                         palette.set_c64pepto()   ; set a better C64 color palette, the X16's default is too saturated
                         bool success = convert_koalapic()
                         diskio.f_close()
@@ -35,10 +35,10 @@ koala_module {
     sub convert_koalapic() -> bool {
         cx16.r14 = color_data
         cx16.r15 = bg_color_data
-        uword offsety = (gfx2.height - 200) / 2
+        ubyte offsety = (gfx_lores.HEIGHT - 200) / 2
         ubyte cy
         for cy in 0 to 24*8 step 8 {
-            uword posy = cy + offsety
+            ubyte posy = cy + offsety
             ; read and decode next "scanline" (1 character in height=8 pixels)
             uword @zp bitmap_ptr = scanline_buf
             if diskio.f_read(bitmap_ptr, 320)!=320
@@ -48,7 +48,7 @@ koala_module {
                 cx16.r5 = cx as uword * 8   ; xpos
                 ubyte @zp d
                 for d in 0 to 7 {
-                    gfx2.position(cx16.r5, posy + d)
+                    gfx_lores.position(cx16.r5, posy + d)
                     plot_4x2_pixels()
                 }
                 cx16.r14 ++

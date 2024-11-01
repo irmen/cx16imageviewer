@@ -1,4 +1,4 @@
-%import gfx2
+%import gfx_lores
 %import diskio
 
 bmp_module {
@@ -37,9 +37,9 @@ bmp_module {
                     repeat bm_data_offset - total_read
                         void cbm.CHRIN()
                     if set_gfx_screenmode
-                        gfx2.screen_mode(1)    ; 320*240, 256c
+                        gfx_lores.graphics_mode()    ; 320*240, 256c
                     else
-                        gfx2.clear_screen(0)
+                        gfx_lores.clear_screen(0)
                     custompalette.set_bgra(palette, num_colors)
                     decode_bitmap()
                     load_ok = true
@@ -56,14 +56,14 @@ bmp_module {
         sub start_plot() {
             offsetx = 0
             offsety = 0
-            if width < gfx2.width
-                offsetx = (gfx2.width - width - 1) / 2
-            if height < gfx2.height
-                offsety = (gfx2.height - height - 1) / 2
-            if width > gfx2.width
-                width = gfx2.width
-            if height > gfx2.height
-                height = gfx2.height
+            if width < gfx_lores.WIDTH
+                offsetx = (gfx_lores.WIDTH - width - 1) / 2
+            if height < gfx_lores.HEIGHT
+                offsety = (gfx_lores.HEIGHT - height - 1) / 2
+            if width > gfx_lores.WIDTH
+                width = gfx_lores.WIDTH
+            if height > gfx_lores.HEIGHT
+                height = gfx_lores.HEIGHT
         }
 
         sub decode_bitmap() {
@@ -74,11 +74,13 @@ bmp_module {
 
             uword y
             for y in height-1 downto 0 {
-                gfx2.position(offsetx, offsety+y)
+                if offsety+y >= gfx_lores.HEIGHT
+                    continue
+                gfx_lores.position(offsetx, lsb(offsety+y))
                 when bpp {
                     8 -> {
                         void diskio.f_read(scanline_buf, width)
-                        gfx2.next_pixels(scanline_buf, width)
+                        gfx_lores.next_pixels(scanline_buf, width)
                     }
                     4 -> {
                         num_pixels = (width+1)/2
@@ -87,8 +89,8 @@ bmp_module {
                         repeat num_pixels {
                             cx16.r5L = @(cx16.r6)
                             cx16.r6++
-                            gfx2.next_pixel(cx16.r5L>>4)
-                            gfx2.next_pixel(cx16.r5L&15)
+                            gfx_lores.next_pixel(cx16.r5L>>4)
+                            gfx_lores.next_pixel(cx16.r5L&15)
                         }
                     }
                     2 -> {
@@ -98,10 +100,10 @@ bmp_module {
                         repeat num_pixels {
                             cx16.r5L = @(cx16.r6)
                             cx16.r6++
-                            gfx2.next_pixel(cx16.r5L>>6)
-                            gfx2.next_pixel(cx16.r5L>>4 & 3)
-                            gfx2.next_pixel(cx16.r5L>>2 & 3)
-                            gfx2.next_pixel(cx16.r5L & 3)
+                            gfx_lores.next_pixel(cx16.r5L>>6)
+                            gfx_lores.next_pixel(cx16.r5L>>4 & 3)
+                            gfx_lores.next_pixel(cx16.r5L>>2 & 3)
+                            gfx_lores.next_pixel(cx16.r5L & 3)
                         }
                     }
                     1 -> {
@@ -109,7 +111,7 @@ bmp_module {
                         void diskio.f_read(scanline_buf, num_pixels)
                         cx16.r6 = scanline_buf
                         repeat num_pixels {
-                            gfx2.set_8_pixels_from_bits(@(cx16.r6), 1, 0)
+                            gfx_lores.set_8_pixels_from_bits(@(cx16.r6), 1, 0)
                             cx16.r6++
                         }
                     }

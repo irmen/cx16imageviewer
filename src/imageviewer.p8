@@ -1,4 +1,4 @@
-%import gfx2
+%import gfx_lores
 %import textio
 %import diskio
 %import string
@@ -87,7 +87,7 @@ main {
         uword @zp names_ptr = filenames
         ubyte num_files = diskio.list_filenames(0, filenames, sizeof(filenames))
         if num_files!=0 {
-            gfx2.screen_mode(1)    ; 320*240, 256c
+            gfx_lores.graphics_mode()    ; 320*240, 256c
             while @(names_ptr)!=0 and not cbm.STOP2() {
                 uword extension = names_ptr + loader.rfind(names_ptr, '.')
                 if loader.is_known_extension(extension) {

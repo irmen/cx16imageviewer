@@ -1,4 +1,4 @@
-%import gfx2
+%import gfx_lores
 %import palette
 %import diskio
 %import compression
@@ -119,9 +119,9 @@ iff_module {
                     }
                     else if chunk_id == "body" {
                         if set_gfx_screenmode
-                            gfx2.screen_mode(1)    ; 320*240, 256c
+                            gfx_lores.graphics_mode()    ; 320*240, 256c
                         else
-                            gfx2.clear_screen(0)
+                            gfx_lores.clear_screen(0)
                         if camg & $0004 !=0
                             height /= 2     ; interlaced: just skip every odd scanline later
                         if camg & $0080 !=0 and have_cmap
@@ -215,14 +215,14 @@ iff_module {
             interleave_stride = (bitplane_stride as uword) * num_planes
             offsetx = 0
             offsety = 0
-            if width < gfx2.width
-                offsetx = (gfx2.width - width - 1) / 2
-            if height < gfx2.height
-                offsety = (gfx2.height - height - 1) / 2
-            if width > gfx2.width
-                width = gfx2.width
-            if height > gfx2.height
-                height = gfx2.height
+            if width < gfx_lores.WIDTH
+                offsetx = (gfx_lores.WIDTH - width - 1) / 2
+            if height < gfx_lores.HEIGHT
+                offsety = (gfx_lores.HEIGHT - height - 1) / 2
+            if width > gfx_lores.WIDTH
+                width = gfx_lores.WIDTH
+            if height > gfx_lores.HEIGHT
+                height = gfx_lores.HEIGHT
         }
 
         sub decode_raw() {
@@ -232,7 +232,9 @@ iff_module {
                 void diskio.f_read(scanline_data_ptr, interleave_stride)
                 if interlaced
                     void diskio.f_read(scanline_data_ptr, interleave_stride)
-                gfx2.position(offsetx, offsety+y)
+                if offsety+y >= gfx_lores.HEIGHT
+                    continue
+                gfx_lores.position(offsetx, lsb(offsety+y))
                 planar_to_chunky_scanline()
             }
         }
@@ -244,7 +246,9 @@ iff_module {
                 decode_rle_scanline()
                 if interlaced
                     decode_rle_scanline()
-                gfx2.position(offsetx, offsety+y)
+                if offsety+y >= gfx_lores.HEIGHT
+                    continue
+                gfx_lores.position(offsetx, lsb(offsety+y))
                 planar_to_chunky_scanline()
             }
         }
@@ -333,17 +337,17 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
 ;                }
 ;                cx16.r5L >>= 8-num_planes
 
-                gfx2.next_pixel(cx16.r5L)
+                gfx_lores.next_pixel(cx16.r5L)
             }
         }
 
 
         sub decode_pbm_byterun1() {
             start_plot()
-            gfx2.position(0, 0)
+            gfx_lores.position(0, 0)
             repeat height {
                 void compression.decode_rle_srcfunc(cbm.CHRIN, scanline_buf, width)
-                gfx2.next_pixels(scanline_buf, width)
+                gfx_lores.next_pixels(scanline_buf, width)
 ;                cx16.r5 = width
 ;                while cx16.r5!=0 {
 ;                    cx16.r3L = cbm.CHRIN()
@@ -351,12 +355,12 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
 ;                        cx16.r3H = cbm.CHRIN()
 ;                        cx16.r6L = 2+(cx16.r3L^255)
 ;                        repeat cx16.r6L
-;                            gfx2.next_pixel(cx16.r3H)
+;                            gfx_lores.next_pixel(cx16.r3H)
 ;                        cx16.r5 -= cx16.r6L
 ;                    } else if cx16.r3L < 128 {
 ;                        cx16.r3L++
 ;                        void diskio.f_read(scanline_buf, cx16.r3L)
-;                        gfx2.next_pixels(scanline_buf, cx16.r3L)
+;                        gfx_lores.next_pixels(scanline_buf, cx16.r3L)
 ;                        cx16.r5 -= cx16.r3L
 ;                    } else return
 ;                }
@@ -365,10 +369,10 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
 
         sub decode_pbm_raw() {
             start_plot()
-            gfx2.position(0, 0)
+            gfx_lores.position(0, 0)
             repeat height {
                 void diskio.f_read(scanline_buf, width)
-                gfx2.next_pixels(scanline_buf, width)
+                gfx_lores.next_pixels(scanline_buf, width)
             }
         }
     }

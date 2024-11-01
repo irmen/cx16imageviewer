@@ -1,4 +1,4 @@
-%import gfx2
+%import gfx_lores
 %import palette
 
 
@@ -20,9 +20,9 @@ pcx_module {
                     if number_of_planes == 1 {
                         if (width & 7) == 0 {
                             if set_gfx_screenmode
-                                gfx2.screen_mode(1)    ; 320*240, 256c
+                                gfx_lores.graphics_mode()    ; 320*240, 256c
                             else
-                                gfx2.clear_screen(0)
+                                gfx_lores.clear_screen(0)
                             if palette_format==2
                                 custompalette.set_grayscale256()
                             else if num_colors == 16
@@ -77,7 +77,7 @@ pcx_module {
 pcxbitmap {
 
     uword offsetx
-    uword offsety
+    ubyte offsety
     uword @zp py
     uword @zp px
     uword scanline_buf = memory("scanline", 320, 0)
@@ -87,31 +87,31 @@ pcxbitmap {
         offsety = 0
         py = 0
         px = 0
-        if width < gfx2.width
-            offsetx = (gfx2.width - width) / 2
-        if height < gfx2.height
-            offsety = (gfx2.height - height) / 2
+        if width < gfx_lores.WIDTH
+            offsetx = (gfx_lores.WIDTH - width) / 2
+        if height < gfx_lores.HEIGHT
+            offsety = (gfx_lores.HEIGHT - lsb(height)) / 2
     }
 
     sub next_scanline() -> bool {
         px = 0
         py++
-        return py < gfx2.height
+        return py < gfx_lores.HEIGHT
     }
 
     sub do1bpp_rle(uword width, uword height) -> bool {
         start_plot(width, height)
-        gfx2.position(offsetx, offsety)
+        gfx_lores.position(offsetx, offsety)
         while py < height {
             cx16.r4 = cbm.CHRIN()
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
                 cx16.r5L = cbm.CHRIN()
                 repeat cx16.r4L
-                    gfx2.set_8_pixels_from_bits(cx16.r5L, 1, 0)
+                    gfx_lores.set_8_pixels_from_bits(cx16.r5L, 1, 0)
                 px += cx16.r4 * 8
             } else {
-                gfx2.set_8_pixels_from_bits(cx16.r4L, 1, 0)
+                gfx_lores.set_8_pixels_from_bits(cx16.r4L, 1, 0)
                 px += 8
             }
             if px==width
@@ -124,7 +124,7 @@ pcxbitmap {
 
     sub do4bpp_rle(uword width, uword height) -> bool {
         start_plot(width, height)
-        gfx2.position(offsetx, offsety)
+        gfx_lores.position(offsetx, offsety)
         while py < height {
             cx16.r4L = cbm.CHRIN()
             if cx16.r4L>>6==3 {
@@ -133,13 +133,13 @@ pcxbitmap {
                 cx16.r5H = cx16.r5L & 15
                 cx16.r5L >>= 4
                 repeat cx16.r4L {
-                    gfx2.next_pixel(cx16.r5L)
-                    gfx2.next_pixel(cx16.r5H)
+                    gfx_lores.next_pixel(cx16.r5L)
+                    gfx_lores.next_pixel(cx16.r5H)
                 }
                 px += cx16.r4L*2
             } else {
-                gfx2.next_pixel(cx16.r4L >> 4)
-                gfx2.next_pixel(cx16.r4L & 15)
+                gfx_lores.next_pixel(cx16.r4L >> 4)
+                gfx_lores.next_pixel(cx16.r4L & 15)
                 px += 2
             }
             if px==width
@@ -152,17 +152,17 @@ pcxbitmap {
 
     sub do8bpp_rle(uword width, uword height) -> bool {
         start_plot(width, height)
-        gfx2.position(offsetx, offsety)
+        gfx_lores.position(offsetx, offsety)
         while py < height {
             cx16.r4L = cbm.CHRIN()
             if cx16.r4L>>6==3 {
                 cx16.r4L &= %00111111
                 cx16.r5L = cbm.CHRIN()
                 repeat cx16.r4L
-                    gfx2.next_pixel(cx16.r5L)
+                    gfx_lores.next_pixel(cx16.r5L)
                 px += cx16.r4L
             } else {
-                gfx2.next_pixel(cx16.r4L)
+                gfx_lores.next_pixel(cx16.r4L)
                 px++
             }
             if px==width
@@ -175,11 +175,11 @@ pcxbitmap {
 
     sub do1bpp(uword width, uword height) -> bool {
         start_plot(width, height)
-        gfx2.position(offsetx, offsety)
+        gfx_lores.position(offsetx, offsety)
         repeat height {
             repeat width/8 {
                 cx16.r0L = cbm.CHRIN()
-                gfx2.set_8_pixels_from_bits(cx16.r0L, 1, 0)
+                gfx_lores.set_8_pixels_from_bits(cx16.r0L, 1, 0)
             }
         }
 
@@ -188,12 +188,12 @@ pcxbitmap {
 
     sub do4bpp(uword width, uword height) -> bool {
         start_plot(width, height)
-        gfx2.position(offsetx, offsety)
+        gfx_lores.position(offsetx, offsety)
         repeat height {
             repeat width/4 {
                 cx16.r4L = cbm.CHRIN()
-                gfx2.next_pixel(cx16.r4L >> 4)
-                gfx2.next_pixel(cx16.r4L & 15)
+                gfx_lores.next_pixel(cx16.r4L >> 4)
+                gfx_lores.next_pixel(cx16.r4L & 15)
             }
         }
 
@@ -202,10 +202,10 @@ pcxbitmap {
 
     sub do8bpp(uword width, uword height) -> bool {
         start_plot(width, height)
-        gfx2.position(offsetx, offsety)
+        gfx_lores.position(offsetx, offsety)
         repeat height {
             void diskio.f_read(scanline_buf, width)
-            gfx2.next_pixels(scanline_buf, width)
+            gfx_lores.next_pixels(scanline_buf, width)
         }
 
         return true

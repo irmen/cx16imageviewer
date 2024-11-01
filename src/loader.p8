@@ -1,4 +1,4 @@
-%import gfx2
+%import gfx_lores
 %import diskio
 %import textio
 %import string
@@ -98,7 +98,7 @@ loader {
     }
 
     sub restore_screen_mode() {
-        gfx2.screen_mode(0)
+        gfx_lores.text_mode()
         if orig_screenmode!=255 {
             void cx16.screen_mode(orig_screenmode, false)
         }
@@ -136,17 +136,17 @@ loader {
             extension[4] = 0
         }
 
-        bmx.set_bpp(gfx2.bpp)
-        bmx.width = gfx2.width
-        bmx.height = gfx2.height
+        bmx.set_bpp(8)
+        bmx.width = gfx_lores.WIDTH
+        bmx.height = gfx_lores.HEIGHT
         bmx.border = 0
         bmx.compression = 0
-        bmx.palette_entries = $0001 << gfx2.bpp
+        bmx.palette_entries = $0001 << 8
         bmx.palette_start = 0
 
         ubyte[50] bmxfilename
         void string.copy(filenameptr, bmxfilename)
-        bool success = bmx.save(diskio.drivenumber, bmxfilename, 0, 0, gfx2.width)
+        bool success = bmx.save(diskio.drivenumber, bmxfilename, 0, 0, gfx_lores.WIDTH)
         textmode()
         if success {
             txt.print("converted to: ")
