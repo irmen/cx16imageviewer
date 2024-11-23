@@ -36,7 +36,6 @@ iff_module {
         cmap = memory("palette", 256*4, 0)       ; only use 768 of these, but this allows re-use of the same block that the bmp module allocates
 
         if diskio.f_open(filenameptr) and diskio.f_read(buffer, 12)==12 {
-            diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
             if buffer[0]=='f' and buffer[1]=='o' and buffer[2]=='r' and buffer[3]=='m' {
                 if buffer[9]=='l' and buffer[10]=='b' and buffer[11]=='m'
                     format = buffer[8]
@@ -127,7 +126,7 @@ iff_module {
                         if camg & $0080 !=0 and have_cmap
                             make_ehb_palette()
                         if format=='i' {
-                            palette.set_rgb8(cmap, num_colors)
+                            palette.set_rgb8(cmap, num_colors, 0)
                             if imagecompression!=0
                                 decode_rle()
                             else
@@ -135,7 +134,7 @@ iff_module {
                             load_ok = true
                         }
                         else if format=='p' {
-                            palette.set_rgb8(cmap, num_colors)
+                            palette.set_rgb8(cmap, num_colors, 0)
                             if imagecompression!=0
                                 decode_pbm_byterun1()
                             else
@@ -179,6 +178,7 @@ iff_module {
                     void diskio.f_read(scanline_data_ptr, 256)
                 }
             }
+            diskio.reset_read_channel()     ; for CHRIN
             repeat chunk_size_lo
                 void cbm.CHRIN()
             read_aligned()
@@ -191,8 +191,10 @@ iff_module {
             ; "This means that every odd-length "chunk" (see below) must be padded
             ;  so that the next one will fall on an even boundary."
             ; Check that we read such a padding byte if it occurs
-            if chunk_size_lo & 1 !=0
+            if chunk_size_lo & 1 !=0 {
+                diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
                 void cbm.CHRIN()
+            }
         }
 
         sub make_ehb_palette() {
@@ -254,6 +256,7 @@ iff_module {
         }
 
         sub decode_rle_scanline() {
+            diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
             void compression.decode_rle_srcfunc(cbm.CHRIN, scanline_data_ptr, interleave_stride)
 ;            uword @zp x = interleave_stride
 ;            uword plane_ptr = scanline_data_ptr
@@ -345,6 +348,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
         sub decode_pbm_byterun1() {
             start_plot()
             gfx_lores.position(0, 0)
+            diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
             repeat height {
                 void compression.decode_rle_srcfunc(cbm.CHRIN, scanline_buf, width)
                 gfx_lores.next_pixels(scanline_buf, width)
@@ -395,7 +399,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
         }
 
         if changed
-            palette.set_rgb8(cmap, num_colors)     ; set the new palette
+            palette.set_rgb8(cmap, num_colors, 0)     ; set the new palette
 
         sub do_cycle(uword low, uword high, bool reversed) {
             low *= 3

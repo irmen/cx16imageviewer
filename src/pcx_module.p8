@@ -8,7 +8,6 @@ pcx_module {
         ubyte[128] header
 
         if diskio.f_open(filenameptr) and diskio.f_read(header, 128)==128 {
-            diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
             if header[0] == $0a and header[2] <= 1 {
                 ubyte bits_per_pixel = header[3]
                 if bits_per_pixel in [1,4,8] {
@@ -26,9 +25,11 @@ pcx_module {
                             if palette_format==2
                                 custompalette.set_grayscale256()
                             else if num_colors == 16
-                                palette.set_rgb8(&header + $10, 16)
-                            else if num_colors == 2
-                                palette.set_monochrome($000, $fff)
+                                palette.set_rgb8(&header + $10, 16, 0)
+                            else if num_colors == 2 {
+                                palette.set_all_white()
+                                palette.set_color(0, $000)
+                            }
                             if header[2]==0 {
                                 ; uncompressed
                                 when bits_per_pixel {
@@ -45,6 +46,7 @@ pcx_module {
                                 }
                             }
                             if load_ok {
+                                diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
                                 ubyte haspalette = cbm.CHRIN()
                                 if haspalette == 12 {
                                     ; there is 256 colors of palette data at the end
@@ -52,7 +54,7 @@ pcx_module {
                                     load_ok = false
                                     if diskio.f_read(palette_mem, 3*256)==3*256 {
                                         load_ok = true
-                                        palette.set_rgb8(palette_mem, num_colors)
+                                        palette.set_rgb8(palette_mem, num_colors, 0)
                                     } else
                                         loader.error_details = "invalid palette size"
                                 } else
@@ -102,6 +104,7 @@ pcxbitmap {
     sub do1bpp_rle(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx_lores.position(offsetx, offsety)
+        diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
         while py < height {
             cx16.r4 = cbm.CHRIN()
             if cx16.r4L>>6==3 {
@@ -125,6 +128,7 @@ pcxbitmap {
     sub do4bpp_rle(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx_lores.position(offsetx, offsety)
+        diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
         while py < height {
             cx16.r4L = cbm.CHRIN()
             if cx16.r4L>>6==3 {
@@ -153,6 +157,7 @@ pcxbitmap {
     sub do8bpp_rle(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx_lores.position(offsetx, offsety)
+        diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
         while py < height {
             cx16.r4L = cbm.CHRIN()
             if cx16.r4L>>6==3 {
@@ -176,6 +181,7 @@ pcxbitmap {
     sub do1bpp(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx_lores.position(offsetx, offsety)
+        diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
         repeat height {
             repeat width/8 {
                 cx16.r0L = cbm.CHRIN()
@@ -189,6 +195,7 @@ pcxbitmap {
     sub do4bpp(uword width, uword height) -> bool {
         start_plot(width, height)
         gfx_lores.position(offsetx, offsety)
+        diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
         repeat height {
             repeat width/4 {
                 cx16.r4L = cbm.CHRIN()

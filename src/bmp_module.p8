@@ -18,7 +18,6 @@ bmp_module {
         if diskio.f_open(filenameptr) and diskio.f_read(&header, $36)==$36 {
             total_read = $36
             if header[0]=='b' and header[1]=='m' {
-                diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
                 uword bm_data_offset = mkword(header[11], header[10])
                 uword header_size = mkword(header[$f], header[$e])
                 width = mkword(header[$13], header[$12])
@@ -28,12 +27,14 @@ bmp_module {
                 if num_colors == 0
                     num_colors = $0001<<bpp
                 uword skip_hdr = header_size - 40
+                diskio.reset_read_channel()     ; for CHRIN
                 repeat skip_hdr
                     void cbm.CHRIN()
                 total_read += skip_hdr
                 size = diskio.f_read(palette, num_colors*4)
                 if size==num_colors*4 {
                     total_read += size
+                    diskio.reset_read_channel()     ; for CHRIN
                     repeat bm_data_offset - total_read
                         void cbm.CHRIN()
                     if set_gfx_screenmode
@@ -117,6 +118,7 @@ bmp_module {
                     }
                 }
 
+                diskio.reset_read_channel()     ; for CHRIN
                 repeat pad_bytes
                     void cbm.CHRIN()
             }

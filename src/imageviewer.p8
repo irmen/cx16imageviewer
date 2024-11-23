@@ -1,7 +1,7 @@
 %import gfx_lores
 %import textio
 %import diskio
-%import string
+%import strings
 %import loader
 %zeropage basicsafe
 %option no_sysinit
@@ -96,7 +96,7 @@ main {
                     else
                         break
                 }
-                names_ptr += string.length(names_ptr) + 1
+                names_ptr += strings.length(names_ptr) + 1
             }
         } else
             txt.print("no files in directory!\n")

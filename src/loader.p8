@@ -1,7 +1,7 @@
 %import gfx_lores
 %import diskio
 %import textio
-%import string
+%import strings
 %import bmx
 %import palette
 %import koala_module
@@ -16,13 +16,13 @@ loader {
     str[] known_extensions = [".koa", ".iff", ".lbm", ".pcx", ".bmp", ".bmx", ".dd", ".ddl"]
 
     sub is_known_extension(str extension) -> bool {
-        if string.length(extension) > 4     ; max extension length
+        if strings.length(extension) > 4     ; max extension length
             return false
         str extension_copy = "?" * 4
         extension_copy = extension
-        void string.lower(extension_copy)
+        void strings.lower(extension_copy)
         for cx16.r4 in known_extensions {
-            if string.compare(extension_copy, cx16.r4)==0
+            if strings.compare(extension_copy, cx16.r4)==0
                 return true
         }
         return false
@@ -32,7 +32,7 @@ loader {
     ubyte @shared orig_screenmode = 255
 
     sub attempt_load(uword filenameptr, bool set_gfx_screenmode) -> bool {
-        void string.lower(filenameptr)
+        void strings.lower(filenameptr)
         if set_gfx_screenmode {
             void cx16.get_screen_mode()
             %asm {{
@@ -106,7 +106,7 @@ loader {
 
     sub rfind(uword stringptr, ubyte char) -> ubyte {
         ubyte i
-        for i in string.length(stringptr)-1 downto 0 {
+        for i in strings.length(stringptr)-1 downto 0 {
             if @(stringptr+i)==char
                 return i
         }
@@ -128,7 +128,7 @@ loader {
             return
         }
         if extension==filenameptr {
-            void string.append(filenameptr, ".bmx")
+            void strings.append(filenameptr, ".bmx")
         } else {
             extension[1] = 'b'
             extension[2] = 'm'
@@ -145,7 +145,7 @@ loader {
         bmx.palette_start = 0
 
         ubyte[50] bmxfilename
-        void string.copy(filenameptr, bmxfilename)
+        void strings.copy(filenameptr, bmxfilename)
         bool success = bmx.save(diskio.drivenumber, bmxfilename, 0, 0, gfx_lores.WIDTH)
         textmode()
         if success {
