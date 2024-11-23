@@ -26,9 +26,11 @@ pcx_module {
                             if palette_format==2
                                 custompalette.set_grayscale256()
                             else if num_colors == 16
-                                palette.set_rgb8(&header + $10, 16)
-                            else if num_colors == 2
-                                palette.set_monochrome($000, $fff)
+                                palette.set_rgb8(&header + $10, 16, 0)
+                            else if num_colors == 2 {
+                                palette.set_all_white()
+                                palette.set_color(0, $000)
+                            }
                             if header[2]==0 {
                                 ; uncompressed
                                 when bits_per_pixel {
@@ -52,7 +54,7 @@ pcx_module {
                                     load_ok = false
                                     if diskio.f_read(palette_mem, 3*256)==3*256 {
                                         load_ok = true
-                                        palette.set_rgb8(palette_mem, num_colors)
+                                        palette.set_rgb8(palette_mem, num_colors, 0)
                                     } else
                                         loader.error_details = "invalid palette size"
                                 } else

@@ -127,7 +127,7 @@ iff_module {
                         if camg & $0080 !=0 and have_cmap
                             make_ehb_palette()
                         if format=='i' {
-                            palette.set_rgb8(cmap, num_colors)
+                            palette.set_rgb8(cmap, num_colors, 0)
                             if imagecompression!=0
                                 decode_rle()
                             else
@@ -135,7 +135,7 @@ iff_module {
                             load_ok = true
                         }
                         else if format=='p' {
-                            palette.set_rgb8(cmap, num_colors)
+                            palette.set_rgb8(cmap, num_colors, 0)
                             if imagecompression!=0
                                 decode_pbm_byterun1()
                             else
@@ -395,7 +395,7 @@ _masks  .byte 128, 64, 32, 16, 8, 4, 2, 1
         }
 
         if changed
-            palette.set_rgb8(cmap, num_colors)     ; set the new palette
+            palette.set_rgb8(cmap, num_colors, 0)     ; set the new palette
 
         sub do_cycle(uword low, uword high, bool reversed) {
             low *= 3
