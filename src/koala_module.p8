@@ -3,7 +3,7 @@
 %import palette
 
 koala_module {
-    ; c64 koala file structure: 8000 bytes bitmap data, 1000 bytes color data, 1000 bytes bg color data, 1 byte screen background color.
+    ; c64 koala file structure: 2 byte PRG header, 8000 bytes bitmap data, 1000 bytes color data, 1000 bytes bg color data, 1 byte screen background color. Total 10003 bytes.
     ; c64 koala files are about 10Kb each and fit easily in a contiguous main memory block.
     uword color_data = memory("palette", 256*4, 0)      ; reuse
     uword bg_color_data = memory("koala_bg_colors", 1000, 0)
@@ -17,7 +17,12 @@ koala_module {
                 diskio.f_read(bg_color_data, 1000)==1000 and
                     diskio.f_read(&screen_color, 1)==1 {
                         screen_color &= 15
-                        diskio.f_seek(0, 2)      ; seek back to the bitmap data
+                        ; need to reopen the file because we've read the last byte
+                        diskio.f_close()
+                        void diskio.f_open(filenameptr)
+                        diskio.reset_read_channel()     ; so we can use cbm.CHRIN()
+                        void cbm.CHRIN()
+                        void cbm.CHRIN()    ; skip prg header
                         if set_gfx_screenmode
                             gfx_lores.graphics_mode()    ; 320*240, 256c
                         else
